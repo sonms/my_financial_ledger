@@ -39,6 +39,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.purang.financial_ledger.screen.calendar.CalendarScreen
+import com.purang.financial_ledger.screen.edit.EditFinancialScreen
+import com.purang.financial_ledger.screen.home.HomeScreen
+import com.purang.financial_ledger.screen.setting.SettingScreen
 import com.purang.financial_ledger.ui.theme.Financial_LedgerTheme
 import com.purang.financial_ledger.view_model.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -76,10 +80,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainContent(homeViewModel: HomeViewModel) {
     val navController = rememberNavController()
-    val financialListData by homeViewModel.financialListData.observeAsState(emptyList())
-    LaunchedEffect(financialListData) {
-        Log.e("main", financialListData.toString())
-    }
     // 현재 라우트를 가져옵니다.
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -94,16 +94,16 @@ fun MainContent(homeViewModel: HomeViewModel) {
                     },
                     modifier = Modifier.padding(end = 10.dp),
                 ) {
-                    Icon(Icons.Default.Create, contentDescription = "Delete")
+                    Icon(Icons.Default.Create, contentDescription = "CreateFinancialData")
                 }
             } else if (currentRoute == MainActivity.BottomNavItem.Calendar.screenRoute) {
                 FloatingActionButton(
                     onClick = {
-                        //navController.navigate("edit_financial?type=calendar&selectedDate=${selectedDate.toString()}")
+                        navController.navigate("edit_financial?type=edit")
                     },
                     modifier = Modifier.padding(end = 10.dp),
                 ) {
-                    Icon(Icons.Default.Create, contentDescription = "Delete")
+                    Icon(Icons.Default.Create, contentDescription = "CreateFinancialData")
                 }
             }
         },
@@ -175,6 +175,38 @@ fun BottomNavigation(navController: NavController) {
 @Composable
 fun NavigationGraph(navController: NavHostController, homeViewModel: HomeViewModel) {
     NavHost(navController = navController, startDestination = MainActivity.BottomNavItem.Home.screenRoute) {
+        composable(MainActivity.BottomNavItem.Calendar.screenRoute) {
+            CalendarScreen(
+                /*onSelectedDate = { selectedDate ->
+                    // 선택된 날짜를 처리하는 코드 작성
+                    Log.d("CalendarScreen", "Selected date: $selectedDate")
+                    homeViewModel.fetchEventsByDate(selectedDate.toString())
+                }*/
+            )
+        }
+        composable(MainActivity.BottomNavItem.Home.screenRoute) {
+            HomeScreen()
+        }
+        composable(MainActivity.BottomNavItem.Settings.screenRoute) {
+            SettingScreen()
+        }
+
+        composable(
+            route = "edit_financial?type={type}", //"edit_todo?type={type}&selectedDate={selectedDate}", // Added selectedDate to the route
+            arguments = listOf(
+                navArgument("type") { defaultValue = "default" }, // Default value for 'type'
+                //navArgument("selectedDate") { defaultValue = LocalDate.now().toString() } // Default value for 'selectedDate'
+            )
+        ) { backStackEntry ->
+
+            // 전달된 인자를 읽어오기
+            val type = backStackEntry.arguments?.getString("type") ?: "default"
+            /*val type = backStackEntry.arguments?.getString("type") ?: "default"
+            val selectedDate = backStackEntry.arguments?.getString("selectedDate") ?: LocalDate.now().toString()*/
+
+            // 'EditTodoScreen'에 매개변수로 'type' 전달
+            EditFinancialScreen(navController, type = type)
+        }
         /*composable(MainActivity.BottomNavItem.Calendar.screenRoute) {
             CalendarScreen(
                 onSelectedDate = { selectedDate ->
