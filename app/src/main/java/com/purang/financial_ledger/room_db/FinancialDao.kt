@@ -1,4 +1,4 @@
-package com.purang.financial_ledger.roomDB
+package com.purang.financial_ledger.room_db
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
@@ -13,6 +13,10 @@ interface FinancialDao {
 
     @Query("SELECT * FROM FinancialTable WHERE date = :date ORDER BY date DESC")
     fun getEventsByDate(date: String): LiveData<List<FinancialEntity>> // 특정 날짜의 이벤트 조회
+
+    @Query("SELECT * FROM FinancialTable WHERE strftime('%Y', date) = :year AND strftime('%m', date) = :month")
+    fun getEventsByMonth(year: String, month: String): LiveData<List<FinancialEntity>>
+
 
     @Insert
     suspend fun insertFinancialList(financialData: FinancialEntity) // Room과 ViewModel의 비동기 처리 일관성을 위해 suspend로 변경

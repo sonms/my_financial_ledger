@@ -1,4 +1,4 @@
-package com.purang.financial_ledger.roomDB
+package com.purang.financial_ledger.room_db
 
 import android.content.Context
 import android.os.Build

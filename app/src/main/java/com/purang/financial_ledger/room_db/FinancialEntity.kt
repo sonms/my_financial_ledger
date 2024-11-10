@@ -1,4 +1,4 @@
-package com.purang.financial_ledger.roomDB
+package com.purang.financial_ledger.room_db
 
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -6,6 +6,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.purang.financial_ledger.model.Category
+import java.time.LocalDateTime
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Entity(tableName = "FinancialTable")
@@ -16,6 +17,8 @@ data class FinancialEntity(
     val category : Category,
     @ColumnInfo
     val content : String?, //적을 내용
+    @ColumnInfo
+    val createDate: String = LocalDateTime.now().toString(),
     @ColumnInfo
     val date : String?, //날짜
     @ColumnInfo
