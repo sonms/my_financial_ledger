@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">composeMyTodoList</string>
+    <string name="app_name">간단 가계부</string>
     <string name="text_calendar">캘린더</string>
     <string name="text_home">홈</string>
     <string name="text_settings">설정</string>
