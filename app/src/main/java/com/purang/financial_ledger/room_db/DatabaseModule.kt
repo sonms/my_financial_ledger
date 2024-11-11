@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.room.Room
+import com.purang.financial_ledger.room_db.category.CategoryDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,7 +25,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "financial-database"
         )
-            //.fallbackToDestructiveMigration() // 기존 데이터베이스를 삭제하고 새로 생성
+            .addMigrations(AppDatabase.MIGRATION_1_2) // 마이그레이션 추가
             .build()
     }
 
@@ -33,5 +34,12 @@ object DatabaseModule {
     @Provides
     fun provideFinancialDao(database: AppDatabase): FinancialDao {
         return database.getFinancialDao()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    @Singleton
+    @Provides
+    fun provideCategoryDao(database: AppDatabase): CategoryDao { // CategoryDao 추가
+        return database.getCategoryDao()
     }
 }

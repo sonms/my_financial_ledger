@@ -31,4 +31,17 @@ interface FinancialDao {
     // 특정 필드만 업데이트하는 메서드 (예: content, expenditure 및 income만)
     @Query("UPDATE FinancialTable SET content = :content, expenditure = :expenditure, income = :income WHERE id = :id")
     suspend fun updateFinancialFields(id: Long, content: String?, expenditure: Long?, income: Long?)
+
+
+
+
+
+    ///////////////////////////////////////
+    //category 카테고리
+    @Query("SELECT * FROM FinancialTable WHERE categoryId = :categoryId")
+    fun getFinancialByCategoryId(categoryId: Long): LiveData<List<FinancialEntity>>
+
+    // 예를 들어, Category가 삭제될 때 ForeignKey.SET_NULL로 인해 categoryId가 null인 데이터를 조회하는 쿼리도 작성할 수 있습니다.
+    @Query("SELECT * FROM FinancialTable WHERE categoryId IS NULL")
+    fun getFinancialWithoutCategory(): LiveData<List<FinancialEntity>>
 }

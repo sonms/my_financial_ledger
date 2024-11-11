@@ -4,17 +4,28 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.purang.financial_ledger.model.Category
+import com.purang.financial_ledger.room_db.category.CategoryEntity
 import java.time.LocalDateTime
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Entity(tableName = "FinancialTable")
+@Entity(
+    tableName = "FinancialTable",
+    foreignKeys = [ForeignKey(
+        entity = CategoryEntity::class,
+        parentColumns = ["id"],
+        childColumns = ["categoryId"],
+        onDelete = ForeignKey.SET_NULL // Category가 삭제되면 관련 FinancialEntity의 카테고리를 NULL로 설정
+    )],
+    indices = [Index(value = ["categoryId"])] // 성능 향상을 위한 인덱스 추가
+)
 data class FinancialEntity(
     @PrimaryKey(autoGenerate = true)
     val id : Long = 0L,
     @ColumnInfo
-    val category : Category,
+    val categoryId : Long?,
     @ColumnInfo
     val content : String?, //적을 내용
     @ColumnInfo

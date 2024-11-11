@@ -8,11 +8,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.purang.financial_ledger.room_db.category.CategoryDao
+import com.purang.financial_ledger.room_db.category.CategoryEntity
 
 @RequiresApi(Build.VERSION_CODES.O)
-@Database(entities = [FinancialEntity::class], version = 1, exportSchema = false)
+@Database(entities = [FinancialEntity::class, CategoryEntity::class], version = 1, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getFinancialDao(): FinancialDao
+    abstract fun getCategoryDao(): CategoryDao  // 추가된 CategoryDao
 
     companion object {
         @Volatile
