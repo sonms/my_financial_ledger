@@ -21,7 +21,6 @@ object PreferencesDataStore {
         }
     }
 
-    // Function to read the string from the DataStore
     fun getEntireIncome(context: Context): Flow<String?> {
         return context.dataStore.data
             .map { preferences ->

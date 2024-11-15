@@ -31,6 +31,10 @@ class HomeViewModel @Inject constructor(
         financialRepo.getEventsByDate(date)
     }
 
+    //수정할 데이터 가져오기
+    private val _selectedFinancialItem = MutableLiveData<FinancialEntity?>()
+    val selectedFinancialItem: LiveData<FinancialEntity?> = _selectedFinancialItem
+
     // 현재 선택된 월의 모든 이벤트를 저장하는 LiveData
     private val _selectedMonth = MutableLiveData<YearMonth>()
 
@@ -47,9 +51,17 @@ class HomeViewModel @Inject constructor(
         _selectedMonth.value = yearMonth
     }
 
+    fun getFinancialItemById(id: Long?) {
+        id?.let {
+            financialRepo.getEventsById(it).observeForever { item ->
+                _selectedFinancialItem.value = item
+            }
+        }
+    }
+
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun addFinancialData(categoryId : Long?, content : String?, date : String?, expenditure:Long?, income:Long?) {
+    fun addFinancialData(categoryId : Long?, title : String?, content : String?, date : String?, expenditure:Long?, income:Long?) {
         /*
         *  val categoryId: Long?,
     val content: String?,
@@ -60,6 +72,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             val newTodo = FinancialEntity(
                 categoryId = categoryId,
+                title = title,
                 content = content,
                 date = date,
                 expenditure = expenditure,

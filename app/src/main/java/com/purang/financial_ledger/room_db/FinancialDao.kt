@@ -17,6 +17,11 @@ interface FinancialDao {
     @Query("SELECT * FROM FinancialTable WHERE strftime('%Y', date) = :year AND strftime('%m', date) = :month")
     fun getEventsByMonth(year: String, month: String): LiveData<List<FinancialEntity>>
 
+    @Query("SELECT * FROM FinancialTable WHERE id = :id")
+    fun getEventsById(id : Long?) : LiveData<FinancialEntity>
+
+
+
 
     @Insert
     suspend fun insertFinancialList(financialData: FinancialEntity) // Room과 ViewModel의 비동기 처리 일관성을 위해 suspend로 변경

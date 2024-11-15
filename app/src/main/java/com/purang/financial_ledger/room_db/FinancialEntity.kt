@@ -25,17 +25,19 @@ data class FinancialEntity(
     @PrimaryKey(autoGenerate = true)
     val id : Long = 0L,
     @ColumnInfo
-    val categoryId : Long?,
+    var categoryId : Long?,
     @ColumnInfo
-    val content : String?, //적을 내용
+    var title : String?, //적을 내용
+    @ColumnInfo
+    var content : String?, //적을 내용
     @ColumnInfo
     val createDate: String = LocalDateTime.now().toString(),
     @ColumnInfo
-    val date : String?, //날짜
+    var date : String?, //날짜
     @ColumnInfo
-    val expenditure : Long?, //지출
+    var expenditure : Long?, //지출
     @ColumnInfo
-    val income : Long?, //호득, 수입 등
+    var income : Long?, //호득, 수입 등
 )
 
 
