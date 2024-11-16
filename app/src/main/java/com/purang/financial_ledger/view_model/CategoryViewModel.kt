@@ -32,12 +32,9 @@ class CategoryViewModel @Inject constructor(
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun deleteCategory(name: String) {
+    fun deleteCategory(data : CategoryEntity) {
         viewModelScope.launch {
-            val newCategory = CategoryEntity(
-                categoryName = name
-            )
-            categoryRepo.insertCategory(newCategory)
+            categoryRepo.deleteCategory(data)
         }
     }
 }

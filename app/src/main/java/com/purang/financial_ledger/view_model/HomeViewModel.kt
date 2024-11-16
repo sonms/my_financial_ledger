@@ -1,6 +1,7 @@
 package com.purang.financial_ledger.view_model
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -31,7 +32,6 @@ class HomeViewModel @Inject constructor(
         financialRepo.getEventsByDate(date)
     }
 
-    //수정할 데이터 가져오기
     private val _selectedFinancialItem = MutableLiveData<FinancialEntity?>()
     val selectedFinancialItem: LiveData<FinancialEntity?> = _selectedFinancialItem
 
@@ -41,6 +41,7 @@ class HomeViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     val selectedMonthEvents: LiveData<List<FinancialEntity>> = _selectedMonth.switchMap { month ->
         val formattedMonth = String.format("%02d", month.monthValue) // 월을 두 자리로 포맷
+        Log.d("selectedMonthEvents", "Fetching events for ${month.year}-${formattedMonth}")
         financialRepo.getEventsByMonth(month.year.toString(), formattedMonth)
     }
 
@@ -69,6 +70,7 @@ class HomeViewModel @Inject constructor(
     val date: String?,
     val expenditure: Long?,
     val income: Long?*/
+
         viewModelScope.launch {
             val newTodo = FinancialEntity(
                 categoryId = categoryId,
@@ -78,6 +80,7 @@ class HomeViewModel @Inject constructor(
                 expenditure = expenditure,
                 income = income
             )
+            Log.e("addFinancialData", newTodo.toString())
             financialRepo.insertData(newTodo)
         }
     }

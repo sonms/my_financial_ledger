@@ -44,6 +44,8 @@ import com.purang.financial_ledger.screen.edit.EditFinancialScreen
 import com.purang.financial_ledger.screen.home.HomeScreen
 import com.purang.financial_ledger.screen.setting.SettingScreen
 import com.purang.financial_ledger.ui.theme.Financial_LedgerTheme
+import com.purang.financial_ledger.ui.theme.blueP4
+import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.view_model.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import java.time.LocalDate
@@ -162,9 +164,9 @@ fun BottomNavigation(navController: NavController) {
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = Color.Blue,
-                    indicatorColor = MaterialTheme.colorScheme.background,
-                    selectedTextColor = Color.Blue
+                    selectedIconColor = blueP4,
+                    //indicatorColor = MaterialTheme.colorScheme.background,
+                    selectedTextColor = blueP6
                 )
             )
         }
@@ -185,7 +187,7 @@ fun NavigationGraph(navController: NavHostController, homeViewModel: HomeViewMod
             )
         }
         composable(MainActivity.BottomNavItem.Home.screenRoute) {
-            HomeScreen()
+            HomeScreen(navController)
         }
         composable(MainActivity.BottomNavItem.Settings.screenRoute) {
             SettingScreen()
