@@ -13,6 +13,9 @@ interface CategoryDao {
     @Query("SELECT * FROM CategoryTable")
     fun getAllCategory(): LiveData<List<CategoryEntity>>
 
+    @Query("SELECT * FROM categorytable WHERE id = :id")
+    fun getCategoryItemById(id : Long?) : LiveData<CategoryEntity>
+
     @Insert
     suspend fun insertCategory(category: CategoryEntity) // Room과 ViewModel의 비동기 처리 일관성을 위해 suspend로 변경
 

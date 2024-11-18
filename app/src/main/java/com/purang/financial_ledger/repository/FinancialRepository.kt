@@ -15,7 +15,9 @@ class FinancialRepository @Inject constructor(private val financialDao: Financia
     //fun getEventsByMonth(year : String, month : String) : LiveData<List<FinancialEntity>> = financialDao.getEventsByMonth(year, month)
 
     //
-    fun getEventsByMonth(year : String, month : String) : LiveData<List<FinancialEntity>> = financialDao.getEventsByMonth(year, month)
+    fun getEventsByMonth(year: String, month: String): LiveData<List<FinancialEntity>> {
+        return financialDao.getEventsByMonth(year, month)
+    }
 
     fun getEventsById(id : Long?) : LiveData<FinancialEntity> = financialDao.getEventsById(id)
 

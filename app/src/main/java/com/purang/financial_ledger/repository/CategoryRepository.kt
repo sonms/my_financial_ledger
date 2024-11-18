@@ -11,6 +11,8 @@ class CategoryRepository @Inject constructor(private val categoryDao: CategoryDa
 
     fun getAllCategory(): LiveData<List<CategoryEntity>> = categoryDao.getAllCategory()
 
+    fun getEventsById(id : Long?) : LiveData<CategoryEntity> = categoryDao.getCategoryItemById(id)
+
 
     suspend fun insertCategory(data: CategoryEntity) {
         categoryDao.insertCategory(data)
