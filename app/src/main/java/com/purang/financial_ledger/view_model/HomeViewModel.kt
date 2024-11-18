@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.purang.financial_ledger.repository.FinancialRepository
@@ -35,27 +36,35 @@ class HomeViewModel @Inject constructor(
     private val _selectedFinancialItem = MutableLiveData<FinancialEntity?>()
     val selectedFinancialItem: LiveData<FinancialEntity?> = _selectedFinancialItem
 
-    // 현재 선택된 월의 모든 이벤트를 저장하는 LiveData
+
+
+    // LiveData to track the selected month
     private val _selectedMonth = MutableLiveData<YearMonth>()
 
+    // LiveData that fetches events for the selected month
     @RequiresApi(Build.VERSION_CODES.O)
     val selectedMonthEvents: LiveData<List<FinancialEntity>> = _selectedMonth.switchMap { month ->
-        val formattedMonth = String.format("%02d", month.monthValue) // 월을 두 자리로 포맷
-        Log.d("selectedMonthEvents", "Fetching events for ${month.year}-${formattedMonth}")
+        val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
+        Log.e("SelectedMonth", "Fetching events for: ${month.year}-$formattedMonth")
         financialRepo.getEventsByMonth(month.year.toString(), formattedMonth)
+    }
+
+    // Function to set the selected month
+    fun fetchEventsByMonth(yearMonth: YearMonth) {
+        _selectedMonth.value = yearMonth
     }
 
 
     ///////////////////////////////////////////////
 
-    fun fetchEventsByMonth(yearMonth: YearMonth) {
-        _selectedMonth.value = yearMonth
-    }
-
     fun getFinancialItemById(id: Long?) {
-        id?.let {
-            financialRepo.getEventsById(it).observeForever { item ->
-                _selectedFinancialItem.value = item
+        viewModelScope.launch {
+            if (id == null) {
+                _selectedFinancialItem.postValue(null)
+            } else {
+                val event = financialRepo.getEventsById(id).value
+                Log.e("getFinancialItemById", event.toString())
+                _selectedFinancialItem.postValue(event)
             }
         }
     }

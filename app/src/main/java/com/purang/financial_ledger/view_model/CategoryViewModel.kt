@@ -1,6 +1,7 @@
 package com.purang.financial_ledger.view_model
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
@@ -19,6 +20,12 @@ class CategoryViewModel @Inject constructor(
 ) : ViewModel() {
     private val categoryRepo = repository
     val categoryData: LiveData<List<CategoryEntity>> = categoryRepo.getAllCategory()
+
+    fun getCategoryItemById(id: Long?) {
+        viewModelScope.launch {
+            categoryRepo.getEventsById(id)
+        }
+    }
 
 
     @RequiresApi(Build.VERSION_CODES.O)
