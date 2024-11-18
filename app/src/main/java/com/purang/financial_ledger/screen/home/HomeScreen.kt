@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -58,7 +59,11 @@ import com.example.what2c.preferences_data_store.PreferencesDataStore.getEntireE
 import com.example.what2c.preferences_data_store.PreferencesDataStore.getEntireIncome
 import com.purang.financial_ledger.R
 import com.purang.financial_ledger.room_db.FinancialEntity
+import com.purang.financial_ledger.ui.theme.Financial_LedgerTheme
+import com.purang.financial_ledger.ui.theme.Pink80
+import com.purang.financial_ledger.ui.theme.Purple80
 import com.purang.financial_ledger.ui.theme.blueP3
+import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.ui.theme.blueP7
 import com.purang.financial_ledger.view_model.HomeViewModel
@@ -79,8 +84,8 @@ fun HomeScreen(
     var selectMonth by remember { mutableStateOf(YearMonth.now().toString()) }
 
     LaunchedEffect(Unit) {
-        viewModel.fetchEventsByMonth(YearMonth.now())
-        Log.e("monthFinancialData", monthFinancialData.toString())
+        val currentMonth = YearMonth.now()
+        viewModel.fetchEventsByMonth(currentMonth) // Fetch data for current year and month
     }
 
     LaunchedEffect(selectMonth) {
@@ -213,7 +218,6 @@ fun HomeScreen(
     }
 }
 
-
 @Composable
 fun HomeFinancialItem(
     item: FinancialEntity,
@@ -222,48 +226,83 @@ fun HomeFinancialItem(
     var expanded by rememberSaveable { mutableStateOf(false) }
 
     // Content layout, allows expand/collapse interaction
-    Row(
-        modifier = Modifier
-            .padding(12.dp)
-            .animateContentSize(
-                animationSpec = spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow
-                )
-            )
-            .clickable {
-                onItemClick(item) // handle click and pass item data
-            }
-    ) {
-        Column(
+    Financial_LedgerTheme {
+        Row(
             modifier = Modifier
-                .weight(1f)
+                .fillMaxWidth()
                 .padding(12.dp)
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                )
+                .clickable {
+                    onItemClick(item) // handle click and pass item data
+                }
+                .background(
+                    color = if (expanded) MaterialTheme.colorScheme.primary//열릴때
+                    else MaterialTheme.colorScheme.tertiary, //기본
+                    shape = RoundedCornerShape(8.dp)
+                )
         ) {
-            // Display the financial data
-            Text(
-                text = item.title ?: "",
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Show additional content when expanded
-            if (expanded) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(12.dp)
+            ) {
+                // Display the financial data
                 Text(
-                    text = item.content ?: "",
-                    style = MaterialTheme.typography.bodyMedium
+                    text = item.title ?: "",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    //color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Date: ${item.date}",
+                    style = MaterialTheme.typography.bodySmall,
+                    //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+
+                // Show additional content when expanded
+                if (expanded) {
+                    Text(
+                        text = item.content ?: "",
+                        style = MaterialTheme.typography.bodyMedium,
+                        //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+            }
+
+            // Toggle button to expand/collapse
+            IconButton(onClick = { expanded = !expanded }) {
+                Icon(
+                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (expanded) "Show less" else "Show more"
                 )
             }
         }
+    }
+}
 
-        // Toggle button to expand/collapse
-        IconButton(onClick = { expanded = !expanded }) {
-            Icon(
-                imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                contentDescription = if (expanded) "Show less" else "Show more"
-            )
-        }
+@RequiresApi(Build.VERSION_CODES.O)
+@Preview
+@Composable
+fun preview() {
+    val create = FinancialEntity(
+        title = "Monthly Rent",
+        content = "Paid rent for November. Includes water and electricity bills.",
+        date = "2024-11-01",
+        categoryId = 1L,
+        expenditure = 150000L,
+        income = 0L
+    )
+    Financial_LedgerTheme {
+        HomeFinancialItem(item = create, onItemClick =  {
+
+        })
     }
 }

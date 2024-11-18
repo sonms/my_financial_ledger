@@ -112,14 +112,9 @@ fun EditFinancialScreen(
     // ViewModel에서 데이터 관찰
     val financialItem by viewModel.selectedFinancialItem.observeAsState()
 
-    // id를 사용해 데이터 요청
-    LaunchedEffect(itemId) {
-        viewModel.getFinancialItemById(itemId)
-        Log.e("launchedItemByid",financialItem.toString())
-    }
-
     var isShowingCategoryDialog by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf<CategoryEntity?>(null) }
+    var selectedDate by remember { mutableStateOf<String?>("") }
 
     var textTitle by remember {
         mutableStateOf("")
@@ -135,14 +130,30 @@ fun EditFinancialScreen(
         mutableStateOf("")
     }
 
-    var createFinancialData by remember {
-        mutableStateOf<FinancialEntity?>(null)
+    if (type != "default") {
+        // id를 사용해 데이터 요청
+        LaunchedEffect(Unit) {
+            viewModel.getFinancialItemById(itemId)
+            categoryViewModel.getCategoryItemById(financialItem?.categoryId)
+            Log.e("launchedItemByid",financialItem.toString())
+
+            textTitle = financialItem?.title.toString()
+            textContent = financialItem?.content.toString()
+            selectedCategory = categoryDataList.find { it.id == financialItem?.categoryId }
+            editIncome = financialItem?.income.toString()
+            editExpenditure = financialItem?.expenditure.toString()
+            selectedDate = financialItem?.date
+        }
     }
 
-    if (financialItem != null) {
+    /*var createFinancialData by remember {
+        mutableStateOf<FinancialEntity?>(null)
+    }*/
+
+    /*if (financialItem != null) {
         createFinancialData = financialItem
         Log.e("financialSelected",createFinancialData.toString())
-    }
+    }*/
 
 
 
@@ -160,7 +171,7 @@ fun EditFinancialScreen(
                     textTitle = textTitle,
                     onTextChange = { newText ->
                         textTitle = newText
-                        createFinancialData?.title = textTitle
+                        //createFinancialData?.title = textTitle
                     }
                 )
             }
@@ -170,7 +181,7 @@ fun EditFinancialScreen(
                     textContent = textContent,
                     onTextChange = { newText ->
                         textContent = newText
-                        createFinancialData?.content = textContent
+                        //createFinancialData?.content = textContent
                     }
                 )
             }
@@ -205,7 +216,7 @@ fun EditFinancialScreen(
                             onClick = {
                                 // 클릭 시 선택된 카테고리 설정
                                 selectedCategory = item
-                                createFinancialData?.categoryId = item.id
+                                //createFinancialData?.categoryId = item.id
                                 Log.e("Selected Category", item.toString())
                             },
                             onLongClick = {
@@ -221,12 +232,12 @@ fun EditFinancialScreen(
             item {
                 // Date Picker
                 EditCalendar(
-                    onClickCancel = { /*TODO*/ },
-                    onClickConfirm = {
-                        createFinancialData?.date = it
-                        Log.e("createFinancialData", it)
-                    }
-                )
+                    onClickCancel = { /*TODO*/ }
+                ) {//on click confirm
+                    val parsedDate = SimpleDateFormat("yyyyMMdd", Locale.KOREAN).parse(it)
+                    selectedDate =
+                        SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN).format(parsedDate ?: Date())
+                }
             }
 
             item {
@@ -236,11 +247,9 @@ fun EditFinancialScreen(
 
                     incomeOnTextChanged = {newText ->
                         editIncome = newText
-                        createFinancialData?.income = editIncome.toLongOrNull()
                     },
                     expenditureOnTextChanged = {newText ->
                         editExpenditure = newText
-                        createFinancialData?.expenditure = editExpenditure.toLongOrNull()
                     }
                 )
             }
@@ -258,22 +267,23 @@ fun EditFinancialScreen(
                             if (type == "default") {
                                 viewModel.addFinancialData(
                                     categoryId = selectedCategory?.id ?: -1L,
-                                    title = createFinancialData?.title,
-                                    content = createFinancialData?.content,
-                                    date = createFinancialData?.date.toString(),
-                                    expenditure = createFinancialData?.expenditure ?: 0L,
-                                    income = createFinancialData?.income ?: 0L
+                                    title = textTitle,
+                                    content = textContent,
+                                    date = selectedDate,
+                                    expenditure = editExpenditure.toLongOrNull() ?: 0L,
+                                    income = editIncome.toLongOrNull() ?: 0L
                                 )
+                                //Log.e("defaultAdd", createFinancialData.toString())
                                 navController.navigate(MainActivity.BottomNavItem.Home.screenRoute)
                             } else {
                                 //수정
                                 viewModel.addFinancialData(
-                                    title = createFinancialData?.title,
-                                    content = createFinancialData?.content,
-                                    date = createFinancialData?.date.toString(),
-                                    categoryId = createFinancialData?.categoryId ?: -1L,
-                                    income = createFinancialData?.income ?: 0L,
-                                    expenditure = createFinancialData?.categoryId ?: 0L
+                                    categoryId = selectedCategory?.id ?: -1L,
+                                    title = textTitle,
+                                    content = textContent,
+                                    date = selectedDate,
+                                    expenditure = editExpenditure.toLongOrNull() ?: 0L,
+                                    income = editIncome.toLongOrNull() ?: 0L
                                 )
                                 navController.navigate(MainActivity.BottomNavItem.Calendar.screenRoute)
                             }
