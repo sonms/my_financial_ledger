@@ -16,15 +16,15 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
+    primary = blueP4, //밝
     secondary = PurpleGrey80,
-    tertiary = Pink80
+    tertiary = blueP5
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
+    primary = pink4,
     secondary = PurpleGrey40,
-    tertiary = Pink40
+    tertiary = pink5
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -47,7 +47,7 @@ fun Financial_LedgerTheme(
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (darkTheme) DarkColorScheme else LightColorScheme
         }
 
         darkTheme -> DarkColorScheme
