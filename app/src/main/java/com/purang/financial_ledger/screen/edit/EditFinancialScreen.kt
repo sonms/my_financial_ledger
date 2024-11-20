@@ -3,11 +3,9 @@ package com.purang.financial_ledger.screen.edit
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +27,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -44,7 +41,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -53,38 +49,31 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.purang.financial_ledger.MainActivity
 import com.purang.financial_ledger.R
 import com.purang.financial_ledger.loading.DialogState
-import com.purang.financial_ledger.room_db.FinancialEntity
 import com.purang.financial_ledger.room_db.category.CategoryEntity
-import com.purang.financial_ledger.ui.theme.Financial_LedgerTheme
 import com.purang.financial_ledger.ui.theme.Pink80
 import com.purang.financial_ledger.ui.theme.Purple80
 import com.purang.financial_ledger.ui.theme.blueP2
 import com.purang.financial_ledger.ui.theme.blueP3
-import com.purang.financial_ledger.ui.theme.blueP4
 import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.view_model.CategoryViewModel
@@ -102,19 +91,25 @@ import java.util.TimeZone
 fun EditFinancialScreen(
     navController: NavController,
     type: String,
+    id : String?,
     viewModel: HomeViewModel = hiltViewModel(),
     categoryViewModel: CategoryViewModel = hiltViewModel()
 ) {
-    val navBackStackEntry = navController.currentBackStackEntryAsState()
-    val itemId = navBackStackEntry.value?.arguments?.getString("id")?.toLong()
+    Log.e("Edit", "$type $id")
+    val financialItem by viewModel.selectedFinancialItem.collectAsState()
+    if (id != null) {
+        LaunchedEffect(id) {
+            viewModel.setSelectedId(id.toLongOrNull())
+            Log.e("launchedItemByid",financialItem.toString())
+        }
+    }
 
     val categoryDataList by categoryViewModel.categoryData.observeAsState(emptyList())
     // ViewModel에서 데이터 관찰
-    val financialItem by viewModel.selectedFinancialItem.observeAsState()
 
     var isShowingCategoryDialog by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf<CategoryEntity?>(null) }
-    var selectedDate by remember { mutableStateOf<String?>("") }
+    var selectedDate by remember { mutableStateOf<String?>(YearMonth.now().toString()) }
 
     var textTitle by remember {
         mutableStateOf("")
@@ -131,14 +126,13 @@ fun EditFinancialScreen(
     }
 
     if (type != "default") {
-        // id를 사용해 데이터 요청
-        LaunchedEffect(Unit) {
-            viewModel.getFinancialItemById(itemId)
+        LaunchedEffect(financialItem) {
+            // categoryViewModel에서 categoryId로 카테고리 데이터 가져오기
             categoryViewModel.getCategoryItemById(financialItem?.categoryId)
-            Log.e("launchedItemByid",financialItem.toString())
 
-            textTitle = financialItem?.title.toString()
-            textContent = financialItem?.content.toString()
+            // 상태값 설정
+            textTitle = financialItem?.title ?: ""
+            textContent = financialItem?.content ?: ""
             selectedCategory = categoryDataList.find { it.id == financialItem?.categoryId }
             editIncome = financialItem?.income.toString()
             editExpenditure = financialItem?.expenditure.toString()
@@ -171,7 +165,7 @@ fun EditFinancialScreen(
                     textTitle = textTitle,
                     onTextChange = { newText ->
                         textTitle = newText
-                        //createFinancialData?.title = textTitle
+                        Log.e("editTest", textTitle)
                     }
                 )
             }
@@ -182,6 +176,7 @@ fun EditFinancialScreen(
                     onTextChange = { newText ->
                         textContent = newText
                         //createFinancialData?.content = textContent
+                        Log.e("editTest", textContent)
                     }
                 )
             }
@@ -232,6 +227,7 @@ fun EditFinancialScreen(
             item {
                 // Date Picker
                 EditCalendar(
+                    selectDate = selectedDate,
                     onClickCancel = { /*TODO*/ }
                 ) {//on click confirm
                     val parsedDate = SimpleDateFormat("yyyyMMdd", Locale.KOREAN).parse(it)
@@ -247,9 +243,11 @@ fun EditFinancialScreen(
 
                     incomeOnTextChanged = {newText ->
                         editIncome = newText
+                        Log.e("editTest", editIncome)
                     },
                     expenditureOnTextChanged = {newText ->
                         editExpenditure = newText
+                        Log.e("editTest", editExpenditure)
                     }
                 )
             }
@@ -266,7 +264,7 @@ fun EditFinancialScreen(
                             //추가
                             if (type == "default") {
                                 viewModel.addFinancialData(
-                                    categoryId = selectedCategory?.id ?: -1L,
+                                    categoryId = selectedCategory?.id,
                                     title = textTitle,
                                     content = textContent,
                                     date = selectedDate,
@@ -274,18 +272,32 @@ fun EditFinancialScreen(
                                     income = editIncome.toLongOrNull() ?: 0L
                                 )
                                 //Log.e("defaultAdd", createFinancialData.toString())
-                                navController.navigate(MainActivity.BottomNavItem.Home.screenRoute)
+                                navController.navigate(
+                                    MainActivity.BottomNavItem.Home.screenRoute,
+                                    NavOptions.Builder()
+                                        .setLaunchSingleTop(true)  // 이미 존재하는 화면을 재사용하지 않음
+                                        .setPopUpTo(navController.graph.startDestinationId, true)  // 이전 화면을 스택에서 제거
+                                        .build()
+                                )
                             } else {
                                 //수정
-                                viewModel.addFinancialData(
-                                    categoryId = selectedCategory?.id ?: -1L,
+                                Log.e("editFinancialData", "수정")
+                                viewModel.updateFinancialData(
+                                    id = financialItem?.id!!,
+                                    categoryId = selectedCategory?.id,
                                     title = textTitle,
                                     content = textContent,
                                     date = selectedDate,
                                     expenditure = editExpenditure.toLongOrNull() ?: 0L,
                                     income = editIncome.toLongOrNull() ?: 0L
                                 )
-                                navController.navigate(MainActivity.BottomNavItem.Calendar.screenRoute)
+                                navController.navigate(
+                                    MainActivity.BottomNavItem.Home.screenRoute,
+                                    NavOptions.Builder()
+                                        .setLaunchSingleTop(true)  // 이미 존재하는 화면을 재사용하지 않음
+                                        .setPopUpTo(navController.graph.startDestinationId, true)  // 이전 화면을 스택에서 제거
+                                        .build()
+                                )
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
@@ -419,11 +431,12 @@ fun EditContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditCalendar(
+    selectDate : String?,
     onClickCancel: () -> Unit,
     onClickConfirm: (yyyyMMdd: String) -> Unit
 ) { //날짜 설정 칸?
     var selectedDate by remember {
-        mutableStateOf(YearMonth.now().toString())
+        mutableStateOf(selectDate ?: YearMonth.now().toString())
     }
     val isDialogShowing by DialogState.isShowing.collectAsState()
 

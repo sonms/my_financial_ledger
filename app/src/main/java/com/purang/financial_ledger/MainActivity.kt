@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -194,20 +195,19 @@ fun NavigationGraph(navController: NavHostController, homeViewModel: HomeViewMod
         }
 
         composable(
-            route = "edit_financial?type={type}", //"edit_todo?type={type}&selectedDate={selectedDate}", // Added selectedDate to the route
+            route = "edit_financial?type={type}&id={id}",
             arguments = listOf(
-                navArgument("type") { defaultValue = "default" }, // Default value for 'type'
-                //navArgument("selectedDate") { defaultValue = LocalDate.now().toString() } // Default value for 'selectedDate'
+                navArgument("type") { defaultValue = "default" },
+                navArgument("id") { defaultValue = "-1" }
             )
         ) { backStackEntry ->
 
             // 전달된 인자를 읽어오기
             val type = backStackEntry.arguments?.getString("type") ?: "default"
-            /*val type = backStackEntry.arguments?.getString("type") ?: "default"
-            val selectedDate = backStackEntry.arguments?.getString("selectedDate") ?: LocalDate.now().toString()*/
+            val id = backStackEntry.arguments?.getString("id") ?: "-1"
 
             // 'EditTodoScreen'에 매개변수로 'type' 전달
-            EditFinancialScreen(navController, type = type)
+            EditFinancialScreen(navController, type = type, id = id)
         }
         /*composable(MainActivity.BottomNavItem.Calendar.screenRoute) {
             CalendarScreen(
