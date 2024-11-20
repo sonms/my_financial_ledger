@@ -2,6 +2,7 @@ package com.purang.financial_ledger.screen.home
 
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,11 +31,16 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,7 +52,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -58,17 +67,17 @@ import com.example.what2c.preferences_data_store.PreferencesDataStore
 import com.example.what2c.preferences_data_store.PreferencesDataStore.getEntireExpenditure
 import com.example.what2c.preferences_data_store.PreferencesDataStore.getEntireIncome
 import com.purang.financial_ledger.R
+import com.purang.financial_ledger.model.TotalIncomeExpenditure
 import com.purang.financial_ledger.room_db.FinancialEntity
 import com.purang.financial_ledger.ui.theme.Financial_LedgerTheme
-import com.purang.financial_ledger.ui.theme.Pink80
-import com.purang.financial_ledger.ui.theme.Purple80
 import com.purang.financial_ledger.ui.theme.blueP3
-import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.ui.theme.blueP7
+import com.purang.financial_ledger.ui.theme.pink5
 import com.purang.financial_ledger.view_model.HomeViewModel
 import java.time.YearMonth
 
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(
@@ -76,16 +85,23 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val monthFinancialData by viewModel.selectedMonthEvents.observeAsState(emptyList())
-    val context = LocalContext.current
-    val entireIncome by getEntireIncome(context).collectAsState(initial = "0")
-    val entireExpenditure by getEntireExpenditure(context).collectAsState(initial = "0")
+    val monthTotalIncomeExpenditure by viewModel.selectedMonthTotals.observeAsState(
+        TotalIncomeExpenditure(0, 0)
+    )
+    var isEmotionBottomSheetOpen by remember { mutableStateOf(false) }
+    val yearMonths by viewModel.getDistinctYearMonthsData.observeAsState(emptyList())
 
+    /*val context = LocalContext.current
+    val entireIncome by getEntireIncome(context).collectAsState(initial = "0")
+    val entireExpenditure by getEntireExpenditure(context).collectAsState(initial = "0")*/
 
     var selectMonth by remember { mutableStateOf(YearMonth.now().toString()) }
 
     LaunchedEffect(Unit) {
         val currentMonth = YearMonth.now()
         viewModel.fetchEventsByMonth(currentMonth) // Fetch data for current year and month
+        Log.e("monthTotal", monthTotalIncomeExpenditure.toString())
+        Log.e("monthTotal2", yearMonths.toString())
     }
 
     LaunchedEffect(selectMonth) {
@@ -113,7 +129,7 @@ fun HomeScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "2024년 11월",
+                text = "${YearMonth.now().year}년 ${YearMonth.now().monthValue}월",
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp
             )
@@ -122,12 +138,16 @@ fun HomeScreen(
                 Icons.Default.KeyboardArrowDown,
                 contentDescription = "MonthDropDown",
                 tint = blueP3,
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = Modifier.padding(start = 8.dp).clickable {
+                    isEmotionBottomSheetOpen = true
+                }
             )
 
             Spacer(modifier = Modifier.weight(1f))
 
-            IconButton(onClick = { /* TODO: Handle search action */ }) {
+            IconButton(onClick = {
+
+            }) {
                 Icon(Icons.Default.Search, contentDescription = "Search")
             }
         }
@@ -158,10 +178,11 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "$entireIncome",
+                            text = "+${monthTotalIncomeExpenditure.totalIncome ?: 0}",
                             fontWeight = FontWeight.Bold,
                             fontSize = 24.sp,
-                            modifier = Modifier.align(Alignment.End)
+                            modifier = Modifier.align(Alignment.End),
+                            color = MaterialTheme.colorScheme.onSecondary
                         )
                     }
 
@@ -180,10 +201,11 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "$entireExpenditure",
+                            text = "-${monthTotalIncomeExpenditure.totalExpenditure ?: 0}",
                             fontWeight = FontWeight.Bold,
                             fontSize = 24.sp,
-                            modifier = Modifier.align(Alignment.End)
+                            modifier = Modifier.align(Alignment.End),
+                            color = MaterialTheme.colorScheme.secondary
                         )
                     }
                 }
@@ -216,6 +238,79 @@ fun HomeScreen(
             }
         }
     }
+
+    if (isEmotionBottomSheetOpen) {
+        val context = LocalContext.current
+        Log.e("test3", "test3")
+        MonthDropDownButtonBottomSheet(
+            modifier = Modifier.height(160.dp),
+            monthData = yearMonths.ifEmpty {
+                Toast.makeText(context, "현재 달 이외에 데이터가 존재하지 않습니다.", Toast.LENGTH_SHORT).show()
+                emptyList()
+            },
+            closeSheet = { isEmotionBottomSheetOpen = false },
+            onClick = {
+                selectMonth = it
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MonthDropDownButtonBottomSheet(
+    modifier: Modifier = Modifier,
+    closeSheet: () -> Unit,
+    monthData: List<String?>,
+    onClick: (String) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState()
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+
+    ModalBottomSheet(
+        onDismissRequest = closeSheet,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        dragHandle = null,
+        windowInsets = WindowInsets(0, 0, 0, 0)
+    ) {
+        Column(
+            modifier = modifier
+                .padding(10.dp)
+                .height(screenHeight / 2) // 화면 높이의 절반으로 설정
+        ) {
+            if (monthData.isEmpty()) {
+                Text(
+                    text = "데이터가 있는 월이 존재하지 않습니다.",
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                )
+            } else {
+                LazyColumn {
+                    itemsIndexed(
+                        items = monthData
+                    ) { _, item ->
+                        item?.ifEmpty { "Invalid Data" }?.let {
+                            Text(
+                                text = it,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp)
+                                    .clickable {
+                                        onClick(item)
+                                        closeSheet()
+                                    }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -225,7 +320,6 @@ fun HomeFinancialItem(
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
 
-    // Content layout, allows expand/collapse interaction
     Financial_LedgerTheme {
         Row(
             modifier = Modifier
@@ -251,13 +345,41 @@ fun HomeFinancialItem(
                     .weight(1f)
                     .padding(12.dp)
             ) {
-                // Display the financial data
-                Text(
-                    text = item.title ?: "",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp,
-                    //color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    // Display the financial data
+                    Text(
+                        text = item.title ?: "",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 24.sp,
+                        //color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    Column (
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "수입 +${item.income?.toString() ?: "0"}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSecondary
+                            //color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "지출 -${item.expenditure?.toString() ?: "0"}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.secondary
+                            //color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -271,7 +393,7 @@ fun HomeFinancialItem(
                 if (expanded) {
                     Text(
                         text = item.content ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }

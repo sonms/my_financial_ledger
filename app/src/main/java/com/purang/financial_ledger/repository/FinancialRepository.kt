@@ -1,6 +1,7 @@
 package com.purang.financial_ledger.repository
 
 import androidx.lifecycle.LiveData
+import com.purang.financial_ledger.model.TotalIncomeExpenditure
 import com.purang.financial_ledger.room_db.FinancialDao
 import com.purang.financial_ledger.room_db.FinancialEntity
 import javax.inject.Inject
@@ -12,14 +13,25 @@ class FinancialRepository @Inject constructor(private val financialDao: Financia
     // 특정 날짜의 이벤트 가져오기
     fun getEventsByDate(date: String): LiveData<List<FinancialEntity>> = financialDao.getEventsByDate(date)
 
-    //fun getEventsByMonth(year : String, month : String) : LiveData<List<FinancialEntity>> = financialDao.getEventsByMonth(year, month)
-
+    //데이터가 존재하는 년월 가져오기
+    fun getDistinctYearMonths() : LiveData<List<String>> {
+        return financialDao.getDistinctYearMonths()
+    }
     //
     fun getEventsByMonth(year: String, month: String): LiveData<List<FinancialEntity>> {
         return financialDao.getEventsByMonth(year, month)
     }
 
-    fun getEventsById(id : Long?) : LiveData<FinancialEntity> = financialDao.getEventsById(id)
+    fun getTotalIncomeExpenditure(year: String, month: String): LiveData<TotalIncomeExpenditure> {
+        return financialDao.getTotalIncomeExpenditureByMonth(year, month)
+    }
+
+    // 특정 ID에 해당하는 데이터를 가져오는 함수
+    suspend fun getEventsById(id: Long?): FinancialEntity? {
+        return id?.let {
+            financialDao.getEventsById(id)
+        }
+    }
 
     // 할 일 삽입
     suspend fun insertData(data: FinancialEntity) {

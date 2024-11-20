@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
+import com.purang.financial_ledger.model.TotalIncomeExpenditure
 
 @Dao
 interface FinancialDao {
@@ -18,10 +19,20 @@ interface FinancialDao {
     fun getEventsByMonth(year: String, month: String): LiveData<List<FinancialEntity>>
 
     @Query("SELECT * FROM FinancialTable WHERE id = :id")
-    fun getEventsById(id : Long?) : LiveData<FinancialEntity>
+    suspend fun getEventsById(id: Long?): FinancialEntity?
 
+    @Query("""
+    SELECT 
+        SUM(income) AS totalIncome, 
+        SUM(expenditure) AS totalExpenditure 
+    FROM FinancialTable 
+    WHERE strftime('%Y', date) = :year 
+    AND strftime('%m', date) = :month
+""")
+    fun getTotalIncomeExpenditureByMonth(year: String, month: String): LiveData<TotalIncomeExpenditure>
 
-
+    @Query("SELECT DISTINCT strftime('%Y-%m', date) AS yearMonth FROM FinancialTable ORDER BY yearMonth")
+    fun getDistinctYearMonths(): LiveData<List<String>>
 
     @Insert
     suspend fun insertFinancialList(financialData: FinancialEntity) // Room과 ViewModel의 비동기 처리 일관성을 위해 suspend로 변경
