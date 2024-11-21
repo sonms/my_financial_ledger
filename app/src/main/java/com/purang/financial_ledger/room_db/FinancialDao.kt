@@ -15,7 +15,7 @@ interface FinancialDao {
     @Query("SELECT * FROM FinancialTable WHERE date = :date ORDER BY date DESC")
     fun getEventsByDate(date: String): LiveData<List<FinancialEntity>> // 특정 날짜의 이벤트 조회
 
-    @Query("SELECT * FROM FinancialTable WHERE strftime('%Y', date) = :year AND strftime('%m', date) = :month")
+    @Query("SELECT * FROM FinancialTable WHERE strftime('%Y', date) = :year AND strftime('%m', date) = :month ORDER BY date DESC")
     fun getEventsByMonth(year: String, month: String): LiveData<List<FinancialEntity>>
 
     @Query("SELECT * FROM FinancialTable WHERE id = :id")
@@ -33,6 +33,18 @@ interface FinancialDao {
 
     @Query("SELECT DISTINCT strftime('%Y-%m', date) AS yearMonth FROM FinancialTable ORDER BY yearMonth")
     fun getDistinctYearMonths(): LiveData<List<String>>
+
+    //전년도 같은 월 비교
+    @Query("""
+    SELECT 
+        SUM(income) AS totalIncome, 
+        SUM(expenditure) AS totalExpenditure 
+    FROM FinancialTable 
+    WHERE strftime('%Y', date) = :year 
+    AND strftime('%m', date) = :month
+""")
+    fun getBeforeTotalIncomeExpenditureByYearMonth(year: String, month: String): LiveData<TotalIncomeExpenditure>
+
 
     @Insert
     suspend fun insertFinancialList(financialData: FinancialEntity) // Room과 ViewModel의 비동기 처리 일관성을 위해 suspend로 변경

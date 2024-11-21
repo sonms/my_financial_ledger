@@ -40,6 +40,7 @@ class HomeViewModel @Inject constructor(
 
     // LiveData to track the selected month
     private val _selectedMonth = MutableLiveData<YearMonth>()
+    private val _selectedBeforeYearMonth = MutableLiveData<YearMonth>()
 
     // LiveData that fetches events for the selected month
     @RequiresApi(Build.VERSION_CODES.O)
@@ -52,6 +53,10 @@ class HomeViewModel @Inject constructor(
     // Function to set the selected month
     fun fetchEventsByMonth(yearMonth: YearMonth) {
         _selectedMonth.value = yearMonth
+    }
+
+    fun fetchBeforeByYearMonth(yearMonth: YearMonth) {
+        _selectedBeforeYearMonth.value = yearMonth
     }
 
 
@@ -93,6 +98,16 @@ class HomeViewModel @Inject constructor(
         Log.e("monthTotalIncomeExpenditure", "Fetching events for: ${month.year}-$formattedMonth")
         financialRepo.getTotalIncomeExpenditure(month.year.toString(), formattedMonth)
     }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    val selectedBeforeYearMonthTotals: LiveData<TotalIncomeExpenditure> = _selectedBeforeYearMonth.switchMap { month ->
+        val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
+        Log.e("monthTotalIncomeExpenditure", "Fetching events for: ${month.year}-$formattedMonth")
+        financialRepo.getTotalIncomeExpenditure((month.year-1).toString(), formattedMonth)
+    }
+
+
+
 
 
 
