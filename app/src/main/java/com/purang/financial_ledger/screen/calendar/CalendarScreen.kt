@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -67,9 +68,27 @@ fun CalendarScreen(
     val monthTotalIncomeExpenditure by viewModel.selectedMonthTotals.observeAsState(
         TotalIncomeExpenditure(0, 0)
     )
+
+    val monthBeforeTotalIncomeExpenditure by viewModel.selectedBeforeYearMonthTotals.observeAsState(
+        TotalIncomeExpenditure(0, 0)
+    )
+
     var isEmotionBottomSheetOpen by remember { mutableStateOf(false) }
     val yearMonths by viewModel.getDistinctYearMonthsData.observeAsState(emptyList())
     var selectMonth by remember { mutableStateOf(YearMonth.now().toString()) }
+    var beforeYearMonthDataCheck by remember {
+        mutableStateOf<Long?>(null)
+    }
+    LaunchedEffect(Unit) {
+        val yearMonth = YearMonth.parse(selectMonth)
+        viewModel.fetchBeforeByYearMonth(yearMonth)
+
+        beforeYearMonthDataCheck = monthBeforeTotalIncomeExpenditure.totalExpenditure?.let {
+            monthBeforeTotalIncomeExpenditure.totalIncome?.minus(
+                it
+            )
+        }
+    }
 
     LaunchedEffect(selectMonth) {
         if (selectMonth.isNotEmpty()) {
@@ -116,6 +135,7 @@ fun CalendarScreen(
 
         if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
             TotalGraph(
+                modifier = Modifier.padding(bottom = 20.dp),
                 colors = listOf(redInDark,blueExDark),
                 data = listOf(
                     (monthTotalIncomeExpenditure.totalIncome!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat()),
@@ -125,9 +145,28 @@ fun CalendarScreen(
             )
 
             GraphInfo(monthTotalIncomeExpenditure)
+
+            if (beforeYearMonthDataCheck != null) {
+                Column (
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp)
+                ) {
+                    Text (
+                        text = if ((beforeYearMonthDataCheck ?: 0L) > 0L) {
+                            "전년도 같은 월에 비해 ${beforeYearMonthDataCheck}이만큼 덜 썼어요"
+                        } else {
+                            "전년도 같은 월에 비해 ${beforeYearMonthDataCheck}이만큼 더 썼어요"
+                        }
+                    )
+                }
+            }
+
         } else {
             Text(text = "해당 월에 데이터가 존재하지 않습니다.")
         }
+
+
     }
 
     if (isEmotionBottomSheetOpen) {
@@ -271,11 +310,13 @@ fun GraphInfo(
                 )
             }
         }
-        
-        Spacer(modifier = Modifier.weight(1f))
+
+        Spacer(modifier = Modifier.width(20.dp))
 
         if (total.totalExpenditure != 0L) {
-            Row {
+            Row (
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Canvas(modifier = Modifier
                     .size(16.dp)
                     .padding(end = 5.dp)) { // Canvas 크기 설정

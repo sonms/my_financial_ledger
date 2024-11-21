@@ -26,6 +26,8 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -37,6 +39,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,12 +56,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -70,6 +80,7 @@ import com.purang.financial_ledger.R
 import com.purang.financial_ledger.model.TotalIncomeExpenditure
 import com.purang.financial_ledger.room_db.FinancialEntity
 import com.purang.financial_ledger.ui.theme.Financial_LedgerTheme
+import com.purang.financial_ledger.ui.theme.blueP2
 import com.purang.financial_ledger.ui.theme.blueP3
 import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.ui.theme.blueP7
@@ -88,8 +99,15 @@ fun HomeScreen(
     val monthTotalIncomeExpenditure by viewModel.selectedMonthTotals.observeAsState(
         TotalIncomeExpenditure(0, 0)
     )
-    var isEmotionBottomSheetOpen by remember { mutableStateOf(false) }
+    var isBottomSheetOpen by remember { mutableStateOf(false) }
+    var isSearchOpen by remember {
+        mutableStateOf(false)
+    }
     val yearMonths by viewModel.getDistinctYearMonthsData.observeAsState(emptyList())
+
+    var searchText by remember {
+        mutableStateOf("")
+    }
 
     /*val context = LocalContext.current
     val entireIncome by getEntireIncome(context).collectAsState(initial = "0")
@@ -138,19 +156,35 @@ fun HomeScreen(
                 Icons.Default.KeyboardArrowDown,
                 contentDescription = "MonthDropDown",
                 tint = blueP3,
-                modifier = Modifier.padding(start = 8.dp).clickable {
-                    isEmotionBottomSheetOpen = true
-                }
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .clickable {
+                        isBottomSheetOpen = true
+                    }
             )
 
             Spacer(modifier = Modifier.weight(1f))
 
             IconButton(onClick = {
-
+                isSearchOpen = true
             }) {
                 Icon(Icons.Default.Search, contentDescription = "Search")
             }
         }
+        if (isSearchOpen) {
+            SearchEditText(
+                isSearchOpen = isSearchOpen,
+                searchText = searchText,
+                onTextChange = { newText ->
+                    searchText = newText
+                },
+                onDone = {
+                    isSearchOpen = it
+                    navController.navigate("search?text=${searchText}")
+                }
+            )
+        }
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -220,8 +254,18 @@ fun HomeScreen(
                         .background(blueP7, RoundedCornerShape(12.dp))
                         .padding(16.dp)
                 ) {
+                    val entire = monthTotalIncomeExpenditure.totalExpenditure?.let {
+                        monthTotalIncomeExpenditure.totalIncome?.minus(
+                            it
+                        )
+                    } ?: 0L
+
                     Text(
-                        text = "전 월에 비해 10000원 더 사용하셨습니다!",
+                        text = if (entire > 0L) {
+                            "현재 ${entire}원 남았습니다."
+                        } else {
+                            "현재 ${entire}원 더 사용하였습니다."
+                        },
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
@@ -239,7 +283,7 @@ fun HomeScreen(
         }
     }
 
-    if (isEmotionBottomSheetOpen) {
+    if (isBottomSheetOpen) {
         val context = LocalContext.current
         Log.e("test3", "test3")
         MonthDropDownButtonBottomSheet(
@@ -248,9 +292,64 @@ fun HomeScreen(
                 Toast.makeText(context, "현재 달 이외에 데이터가 존재하지 않습니다.", Toast.LENGTH_SHORT).show()
                 emptyList()
             },
-            closeSheet = { isEmotionBottomSheetOpen = false },
+            closeSheet = { isBottomSheetOpen = false },
             onClick = {
                 selectMonth = it
+            }
+        )
+    }
+}
+
+@Composable
+fun SearchEditText(
+    isSearchOpen : Boolean,
+    searchText: String,
+    onTextChange: (String) -> Unit,
+    onDone : (Boolean) -> Unit
+) {
+    val textColor = MaterialTheme.colorScheme.primary//동적으로 색상변경
+    val focusManager = LocalFocusManager.current
+    // FocusRequester 선언
+    val focusRequester = remember { FocusRequester() }
+
+    // 가상 키보드가 나타나도록 포커스 요청
+    LaunchedEffect(isSearchOpen) {
+        focusRequester.requestFocus()
+    }
+
+    Column (
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+    ) {
+        OutlinedTextField(
+            value = searchText,
+            onValueChange = onTextChange,
+            singleLine = false,
+            textStyle = TextStyle (
+                color = textColor,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Normal,
+            ),
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(bottom = 10.dp)
+                .focusRequester(focusRequester),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = blueP3
+            ),
+            keyboardOptions = KeyboardOptions(
+                //keyboardType = KeyboardType.Number, // 숫자 전용 키보드
+                imeAction = ImeAction.Done // 완료 버튼 표시
+            ),
+            keyboardActions = KeyboardActions(
+                onDone = {
+                    focusManager.clearFocus()
+                    onDone(false)
+                }
+            ),
+            label = {
+                Text("제목과 내용으로 검색해주세요")
             }
         )
     }

@@ -78,6 +78,7 @@ import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.view_model.CategoryViewModel
 import com.purang.financial_ledger.view_model.HomeViewModel
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.YearMonth
@@ -109,7 +110,7 @@ fun EditFinancialScreen(
 
     var isShowingCategoryDialog by remember { mutableStateOf(false) }
     var selectedCategory by remember { mutableStateOf<CategoryEntity?>(null) }
-    var selectedDate by remember { mutableStateOf<String?>(YearMonth.now().toString()) }
+    var selectedDate by remember { mutableStateOf(YearMonth.now().toString()) }
 
     var textTitle by remember {
         mutableStateOf("")
@@ -136,7 +137,7 @@ fun EditFinancialScreen(
             selectedCategory = categoryDataList.find { it.id == financialItem?.categoryId }
             editIncome = financialItem?.income.toString()
             editExpenditure = financialItem?.expenditure.toString()
-            selectedDate = financialItem?.date
+            selectedDate = financialItem?.date.toString()
         }
     }
 
@@ -436,7 +437,7 @@ fun EditCalendar(
     onClickConfirm: (yyyyMMdd: String) -> Unit
 ) { //날짜 설정 칸?
     var selectedDate by remember {
-        mutableStateOf(selectDate ?: YearMonth.now().toString())
+        mutableStateOf(selectDate ?: LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")))
     }
     val isDialogShowing by DialogState.isShowing.collectAsState()
 
@@ -471,16 +472,25 @@ fun EditCalendar(
                 .fillMaxWidth()
                 .wrapContentHeight(),
         ) {
-            val parsedDate = SimpleDateFormat("yyyyMMdd", Locale.KOREAN).parse(selectedDate)
+            val currentDate = LocalDate.now()
+            val formatter = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+            formatter.parse(currentDate.format(DateTimeFormatter.ofPattern("yyyyMMdd")))?.time
+
+            val parsedDate = try {
+                SimpleDateFormat("yyyyMMdd", Locale.KOREAN).parse(selectedDate)
+            } catch (e: ParseException) {
+                formatter  // 날짜 파싱에 실패할 경우 현재 날짜를 사용
+            }
             Text(
                 modifier = Modifier.padding(start = 10.dp),
-                text = SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN).format(parsedDate ?: Date()),
+                text = SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN).format(parsedDate ?: formatter),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
             )
 
             Spacer(modifier = Modifier.weight(1f))
-
 
             Image(
                 painterResource(R.drawable.baseline_calendar_month_24), contentDescription = "AddDate",
