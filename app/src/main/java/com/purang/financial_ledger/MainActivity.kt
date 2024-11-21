@@ -24,6 +24,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,9 +41,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.what2c.preferences_data_store.PreferencesDataStore
 import com.purang.financial_ledger.screen.calendar.CalendarScreen
 import com.purang.financial_ledger.screen.edit.EditFinancialScreen
 import com.purang.financial_ledger.screen.home.HomeScreen
+import com.purang.financial_ledger.screen.search.SearchScreen
 import com.purang.financial_ledger.screen.setting.SettingScreen
 import com.purang.financial_ledger.ui.theme.Financial_LedgerTheme
 import com.purang.financial_ledger.ui.theme.blueP4
@@ -65,14 +68,22 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Financial_LedgerTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    val homeViewModel: HomeViewModel = hiltViewModel()
-                    MainContent(homeViewModel) // Include the MainContent directly
+            val context = LocalContext.current
+            //val scope = rememberCoroutineScope()
+
+            // 다크 모드 상태를 읽어오는 flow
+            val darkModeState = PreferencesDataStore.getState(context).collectAsState(initial = false)
+
+            darkModeState.value?.let {
+                Financial_LedgerTheme(darkTheme = it) {
+                    // A surface container using the 'background' color from the theme
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        val homeViewModel: HomeViewModel = hiltViewModel()
+                        MainContent(homeViewModel) // Include the MainContent directly
+                    }
                 }
             }
         }
@@ -202,42 +213,23 @@ fun NavigationGraph(navController: NavHostController, homeViewModel: HomeViewMod
             )
         ) { backStackEntry ->
 
-            // 전달된 인자를 읽어오기
             val type = backStackEntry.arguments?.getString("type") ?: "default"
             val id = backStackEntry.arguments?.getString("id") ?: "-1"
 
-            // 'EditTodoScreen'에 매개변수로 'type' 전달
             EditFinancialScreen(navController, type = type, id = id)
         }
-        /*composable(MainActivity.BottomNavItem.Calendar.screenRoute) {
-            CalendarScreen(
-                onSelectedDate = { selectedDate ->
-                    // 선택된 날짜를 처리하는 코드 작성
-                    Log.d("CalendarScreen", "Selected date: $selectedDate")
-                    homeViewModel.fetchEventsByDate(selectedDate.toString())
-                }
-            )
-        }
-        composable(MainActivity.BottomNavItem.Home.screenRoute) {
-            HomeScreen()
-        }
-        composable(MainActivity.BottomNavItem.Settings.screenRoute) {
-            SettingsScreen()
-        }
+
         composable(
-            route = "edit_todo?type={type}&selectedDate={selectedDate}", // Added selectedDate to the route
+            route = "search?text={searchText}",
             arguments = listOf(
-                navArgument("type") { defaultValue = "default" }, // Default value for 'type'
-                navArgument("selectedDate") { defaultValue = LocalDate.now().toString() } // Default value for 'selectedDate'
+                navArgument("text") { defaultValue = "" },
             )
         ) { backStackEntry ->
 
             // 전달된 인자를 읽어오기
-            val type = backStackEntry.arguments?.getString("type") ?: "default"
-            val selectedDate = backStackEntry.arguments?.getString("selectedDate") ?: LocalDate.now().toString()
+            val searchText = backStackEntry.arguments?.getString("text") ?: ""
 
-            // 'EditTodoScreen'에 매개변수로 'type' 전달
-            EditTodoScreen(navController, type = type, selectedDate = selectedDate)
-        }*/
+            SearchScreen(navController, searchText)
+        }
     }
 }
