@@ -23,7 +23,7 @@ private val DarkColorScheme = darkColorScheme(
     secondary = blueExDark, //지출
     onSecondary = redInDark, //수입
 
-    primaryContainer = blueP3,
+    primaryContainer = blueP4,
     onPrimaryContainer = Color.White
 )
 

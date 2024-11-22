@@ -222,13 +222,11 @@ fun NavigationGraph(navController: NavHostController, homeViewModel: HomeViewMod
         composable(
             route = "search?text={searchText}",
             arguments = listOf(
-                navArgument("text") { defaultValue = "" },
+                navArgument("searchText") { defaultValue = "" } // 키 수정
             )
         ) { backStackEntry ->
-
-            // 전달된 인자를 읽어오기
-            val searchText = backStackEntry.arguments?.getString("text") ?: ""
-
+            val searchText = backStackEntry.arguments?.getString("searchText") ?: ""
+            Log.d("SearchScreen", "searchText received: $searchText")
             SearchScreen(navController, searchText)
         }
     }
