@@ -86,6 +86,7 @@ import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.ui.theme.blueP7
 import com.purang.financial_ledger.ui.theme.pink5
 import com.purang.financial_ledger.view_model.HomeViewModel
+import java.net.URLEncoder
 import java.time.YearMonth
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -166,11 +167,12 @@ fun HomeScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             IconButton(onClick = {
-                isSearchOpen = true
+                isSearchOpen = !isSearchOpen
             }) {
                 Icon(Icons.Default.Search, contentDescription = "Search")
             }
         }
+
         if (isSearchOpen) {
             SearchEditText(
                 isSearchOpen = isSearchOpen,
@@ -180,7 +182,8 @@ fun HomeScreen(
                 },
                 onDone = {
                     isSearchOpen = it
-                    navController.navigate("search?text=${searchText}")
+                    val encodedSearchText = URLEncoder.encode(searchText, "UTF-8")
+                    navController.navigate("search?text=$encodedSearchText")
                 }
             )
         }
