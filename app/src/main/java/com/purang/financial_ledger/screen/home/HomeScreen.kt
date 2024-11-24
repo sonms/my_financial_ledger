@@ -20,20 +20,25 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -63,6 +68,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -104,6 +110,10 @@ fun HomeScreen(
     var isSearchOpen by remember {
         mutableStateOf(false)
     }
+    var isFilterOpen by remember {
+        mutableStateOf(false)
+    }
+
     val yearMonths by viewModel.getDistinctYearMonthsData.observeAsState(emptyList())
 
     var searchText by remember {
@@ -167,6 +177,12 @@ fun HomeScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             IconButton(onClick = {
+                isFilterOpen = !isFilterOpen
+            }) {
+                Icon(painterResource(id = R.drawable.baseline_filter_alt_24), contentDescription = "Filter")
+            }
+
+            IconButton(onClick = {
                 isSearchOpen = !isSearchOpen
             }) {
                 Icon(Icons.Default.Search, contentDescription = "Search")
@@ -186,6 +202,13 @@ fun HomeScreen(
                     navController.navigate("search?text=$encodedSearchText")
                 }
             )
+        }
+
+        if (isFilterOpen) {
+            FilterUI { check, text ->
+                Log.e("filterCheck", check.toString())
+                Log.e("filterCheck", text.toString())
+            }
         }
 
 
@@ -300,6 +323,51 @@ fun HomeScreen(
                 selectMonth = it
             }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FilterUI(
+    onClick: (Boolean, String) -> Unit
+) {
+    var selected by remember { mutableStateOf(false) }
+    val textList = listOf("오름차순", "내림차순")
+
+    Row (
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(10.dp)
+    ) {
+        FilterChip(selected = false, onClick = { /*TODO*/ }, label = { Text(text = "날짜 정렬") })
+
+        LazyRow {
+            itemsIndexed(
+                items = textList
+            ) { _,  text ->
+                FilterChip(
+                    selected = selected,
+                    onClick = {
+                        selected = !selected
+                        onClick(selected, text)
+                    },
+                    label = { Text(text) },
+                    leadingIcon =
+                    if (selected) {
+                        {
+                            Icon(
+                                imageVector = Icons.Filled.Done,
+                                contentDescription = "Localized Description",
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        }
+                    } else {
+                        null
+                    }
+                )
+            }
+        }
     }
 }
 
