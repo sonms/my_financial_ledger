@@ -41,6 +41,7 @@ class HomeViewModel @Inject constructor(
     // LiveData to track the selected month
     private val _selectedMonth = MutableLiveData<YearMonth>()
     private val _selectedBeforeYearMonth = MutableLiveData<YearMonth>()
+    private val _selectedBeforeMonth = MutableLiveData<YearMonth>()
 
     // LiveData that fetches events for the selected month
     @RequiresApi(Build.VERSION_CODES.O)
@@ -56,6 +57,10 @@ class HomeViewModel @Inject constructor(
     }
 
     fun fetchBeforeByYearMonth(yearMonth: YearMonth) {
+        _selectedBeforeYearMonth.value = yearMonth
+    }
+
+    fun fetchBeforeByMonth(yearMonth: YearMonth) {
         _selectedBeforeYearMonth.value = yearMonth
     }
 
@@ -103,7 +108,18 @@ class HomeViewModel @Inject constructor(
     val selectedBeforeYearMonthTotals: LiveData<TotalIncomeExpenditure> = _selectedBeforeYearMonth.switchMap { month ->
         val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
         Log.e("monthTotalIncomeExpenditure", "Fetching events for: ${month.year}-$formattedMonth")
-        financialRepo.getTotalIncomeExpenditure((month.year-1).toString(), formattedMonth)
+        financialRepo.getBeforeTotalIncomeExpenditureByYearMonth((month.year-1).toString(), formattedMonth)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    val selectedBeforeMonthTotals: LiveData<TotalIncomeExpenditure> = _selectedBeforeMonth.switchMap { month ->
+        if (month.monthValue - 1 == 0) {
+            val formattedMonth = String.format("%02d", 12) // Format month as two digits
+            financialRepo.getBeforeTotalIncomeExpenditureByMonth((month.year-1).toString(), formattedMonth)
+        } else {
+            val formattedMonth = String.format("%02d", month.monthValue-1) // Format month as two digits
+            financialRepo.getBeforeTotalIncomeExpenditureByMonth(month.year.toString(), formattedMonth)
+        }
     }
 
 

@@ -27,7 +27,11 @@ class FinancialRepository @Inject constructor(private val financialDao: Financia
     }
 
     fun getBeforeTotalIncomeExpenditureByYearMonth(year: String, month: String) : LiveData<TotalIncomeExpenditure> {
-        return financialDao.getBeforeTotalIncomeExpenditureByYearMonth(year, month)
+        return financialDao.getTotalIncomeExpenditureByMonth(year, month)
+    }
+
+    fun getBeforeTotalIncomeExpenditureByMonth(year: String, month: String) : LiveData<TotalIncomeExpenditure> {
+        return financialDao.getTotalIncomeExpenditureByMonth(year, month)
     }
 
     // 특정 ID에 해당하는 데이터를 가져오는 함수

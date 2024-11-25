@@ -73,18 +73,36 @@ fun CalendarScreen(
         TotalIncomeExpenditure(0, 0)
     )
 
+    val monthBeforeTotalByMonth by viewModel.selectedBeforeMonthTotals.observeAsState(initial = TotalIncomeExpenditure(0, 0))
+
     var isEmotionBottomSheetOpen by remember { mutableStateOf(false) }
+    var isClickGraphInfo by remember {
+        mutableStateOf(false)
+    }
+
     val yearMonths by viewModel.getDistinctYearMonthsData.observeAsState(emptyList())
     var selectMonth by remember { mutableStateOf(YearMonth.now().toString()) }
     var beforeYearMonthDataCheck by remember {
         mutableStateOf<Long?>(null)
     }
+
+    var beforeMonthDataCheck by remember {
+        mutableStateOf<Long?>(null)
+    }
+
     LaunchedEffect(Unit) {
         val yearMonth = YearMonth.parse(selectMonth)
         viewModel.fetchBeforeByYearMonth(yearMonth)
+        viewModel.fetchBeforeByMonth(yearMonth)
 
         beforeYearMonthDataCheck = monthBeforeTotalIncomeExpenditure.totalExpenditure?.let {
             monthBeforeTotalIncomeExpenditure.totalIncome?.minus(
+                it
+            )
+        }
+
+        beforeMonthDataCheck = monthBeforeTotalByMonth.totalExpenditure?.let {
+            monthBeforeTotalByMonth.totalIncome?.minus(
                 it
             )
         }
@@ -133,6 +151,8 @@ fun CalendarScreen(
             )
         }
 
+
+
         if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
             TotalGraph(
                 modifier = Modifier.padding(bottom = 20.dp),
@@ -141,26 +161,21 @@ fun CalendarScreen(
                     (monthTotalIncomeExpenditure.totalIncome!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat()),
                     (monthTotalIncomeExpenditure.totalExpenditure!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat())
                 ),
-                graphHeight = 120
+                graphHeight = 120,
+                onClick = {
+                    isClickGraphInfo = !isClickGraphInfo
+                }
             )
+
+            if (isClickGraphInfo) {
+                GraphDetailInfo(data = monthTotalIncomeExpenditure)
+            }
 
             GraphInfo(monthTotalIncomeExpenditure)
 
-            if (beforeYearMonthDataCheck != null) {
-                Column (
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp)
-                ) {
-                    Text (
-                        text = if ((beforeYearMonthDataCheck ?: 0L) > 0L) {
-                            "전년도 같은 월에 비해 ${beforeYearMonthDataCheck}이만큼 덜 썼어요"
-                        } else {
-                            "전년도 같은 월에 비해 ${beforeYearMonthDataCheck}이만큼 더 썼어요"
-                        }
-                    )
-                }
-            }
+            CompareBeforeYearMonthTotalAmount(beforeYearMonthDataCheck)
+
+            CompareBeforeMonthTotalAmount(beforeMonthDataCheck)
 
         } else {
             Text(text = "해당 월에 데이터가 존재하지 않습니다.")
@@ -168,6 +183,7 @@ fun CalendarScreen(
 
 
     }
+    //
 
     if (isEmotionBottomSheetOpen) {
         val context = LocalContext.current
@@ -187,11 +203,92 @@ fun CalendarScreen(
 }
 
 @Composable
+fun CompareBeforeYearMonthTotalAmount(beforeYearMonthDataCheck : Long?) {
+    if (beforeYearMonthDataCheck != null) {
+        Column (
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Text (
+                text = if ((beforeYearMonthDataCheck.toLong()) >= 0L) {
+                    "전년도 같은 달에 비해 ${beforeYearMonthDataCheck}이만큼 덜 썼어요"
+                } else {
+                    "전년도 같은 달에 비해 ${beforeYearMonthDataCheck}이만큼 더 썼어요"
+                }
+            )
+        }
+    } else {
+        Column (
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Text (
+                text = "비교할 전 년도가 없어요"
+            )
+        }
+    }
+}
+
+@Composable
+fun CompareBeforeMonthTotalAmount(beforeMonthDataCheck : Long?) {
+    if (beforeMonthDataCheck != null) {
+        Column (
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Text (
+                text = if ((beforeMonthDataCheck.toLong()) >= 0L) {
+                    "이전 달에 비해 ${beforeMonthDataCheck}이만큼 덜 썼어요"
+                } else {
+                    "이전 달에 비해 ${beforeMonthDataCheck}이만큼 더 썼어요"
+                }
+            )
+        }
+    } else {
+        Column (
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+        ) {
+            Text (
+                text = "비교할 이전 달이 없어요"
+            )
+        }
+    }
+}
+
+@Composable
+fun GraphDetailInfo(
+    data : TotalIncomeExpenditure
+) {
+    Row {
+        Text(
+            text = "수입 ${data.totalIncome}",
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSecondary
+        )
+
+        Spacer(modifier = Modifier.width(20.dp))
+
+        Text(
+            text = "지출  ${data.totalExpenditure}",
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.secondary
+        )
+    }
+}
+
+
+@Composable
 internal fun TotalGraph(
     modifier: Modifier = Modifier,
     colors: List<Color>,
     data: List<Float>,
-    graphHeight: Int
+    graphHeight: Int,
+    onClick : () -> Unit
 ) {
     val total = data.sum().coerceAtLeast(0.00001f) // 데이터 리스트에 있는 값의 총합 구하기, 0으로 나누기방지
     val angles = data.map { (it / total * 360f).coerceIn(0f, 360f) } // 데이터 값의 비율을 구하고, 360도를 기준으로 한 각도로 변환하여 리스트로 저장하기, 0~360으로제한
@@ -220,7 +317,11 @@ internal fun TotalGraph(
     }
 
     // Canvas를 사용하여 그래프를 그리고 `graphHeight.dp`를 픽셀 단위로 변환하여 그래프의 높이를 설정
-    Canvas(modifier = modifier.height(graphHeight.dp)) {
+    Canvas(
+        modifier = modifier
+            .height(graphHeight.dp)
+            .clickable { onClick() }
+    ) {
         /*
          * 그래프의 선 두께를 지정
          * `strokeWidth = 4f`로 설정하면 선이 4 픽셀 두꺼워진다.
