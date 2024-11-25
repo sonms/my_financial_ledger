@@ -79,23 +79,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.example.what2c.preferences_data_store.PreferencesDataStore
-import com.example.what2c.preferences_data_store.PreferencesDataStore.getEntireExpenditure
-import com.example.what2c.preferences_data_store.PreferencesDataStore.getEntireIncome
 import com.purang.financial_ledger.R
 import com.purang.financial_ledger.model.TotalIncomeExpenditure
 import com.purang.financial_ledger.room_db.FinancialEntity
+import com.purang.financial_ledger.screen.calendar.numberFormat
 import com.purang.financial_ledger.ui.theme.Financial_LedgerTheme
+import com.purang.financial_ledger.ui.theme.blueD
+import com.purang.financial_ledger.ui.theme.blueExDark
+import com.purang.financial_ledger.ui.theme.blueExLight
 import com.purang.financial_ledger.ui.theme.blueP2
 import com.purang.financial_ledger.ui.theme.blueP3
 import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.ui.theme.blueP7
 import com.purang.financial_ledger.ui.theme.pink5
+import com.purang.financial_ledger.ui.theme.redD
+import com.purang.financial_ledger.ui.theme.redInDark
+import com.purang.financial_ledger.ui.theme.redInLight
 import com.purang.financial_ledger.view_model.HomeViewModel
 import java.net.URLEncoder
 import java.time.YearMonth
 
-@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(
@@ -205,8 +208,7 @@ fun HomeScreen(
         }
 
         if (isFilterOpen) {
-            FilterUI { check, text ->
-                Log.e("filterCheck", check.toString())
+            FilterUI { text ->
                 Log.e("filterCheck", text.toString())
             }
         }
@@ -228,7 +230,7 @@ fun HomeScreen(
                     Column(
                         modifier = Modifier
                             .weight(1f)
-                            .background(blueP3, RoundedCornerShape(12.dp))
+                            .background(blueP6, RoundedCornerShape(12.dp))
                             .padding(16.dp)
                     ) {
                         Text(
@@ -238,11 +240,11 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "+${monthTotalIncomeExpenditure.totalIncome ?: 0}",
+                            text = "+${numberFormat(monthTotalIncomeExpenditure.totalIncome ?: 0)}원",
                             fontWeight = FontWeight.Bold,
                             fontSize = 24.sp,
                             modifier = Modifier.align(Alignment.End),
-                            color = MaterialTheme.colorScheme.onSecondary
+                            color = redInDark
                         )
                     }
 
@@ -261,11 +263,11 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "-${monthTotalIncomeExpenditure.totalExpenditure ?: 0}",
+                            text = "-${numberFormat(monthTotalIncomeExpenditure.totalExpenditure ?: 0)}원",
                             fontWeight = FontWeight.Bold,
                             fontSize = 24.sp,
                             modifier = Modifier.align(Alignment.End),
-                            color = MaterialTheme.colorScheme.secondary
+                            color = blueExLight
                         )
                     }
                 }
@@ -273,27 +275,32 @@ fun HomeScreen(
 
             // 전 월 대비 비교
             item {
+                val entire = monthTotalIncomeExpenditure.totalExpenditure?.let {
+                    monthTotalIncomeExpenditure.totalIncome?.minus(
+                        it
+                    )
+                } ?: 0L
+                val background = if (entire > 0) {
+                    redD
+                } else {
+                    blueD
+                }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp)
-                        .background(blueP7, RoundedCornerShape(12.dp))
+                        .background(background, RoundedCornerShape(12.dp))
                         .padding(16.dp)
                 ) {
-                    val entire = monthTotalIncomeExpenditure.totalExpenditure?.let {
-                        monthTotalIncomeExpenditure.totalIncome?.minus(
-                            it
-                        )
-                    } ?: 0L
-
                     Text(
                         text = if (entire > 0L) {
-                            "현재 ${entire}원 남았습니다."
+                            "현재 ${numberFormat(entire)}원 남았습니다."
                         } else {
-                            "현재 ${entire}원 더 사용하였습니다."
+                            "현재 ${numberFormat(entire)}원 더 사용하였습니다."
                         },
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        fontSize = 16.sp,
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -329,42 +336,50 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterUI(
-    onClick: (Boolean, String) -> Unit
+    onClick: (String) -> Unit // 선택된 필터 값을 전달
 ) {
-    var selected by remember { mutableStateOf(false) }
+    var selectedDesc by remember { mutableStateOf(false) }
+    var selectedAsc by remember { mutableStateOf(false) }
+
     val textList = listOf("오름차순", "내림차순")
 
-    Row (
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
             .padding(10.dp)
     ) {
-        FilterChip(selected = false, onClick = { /*TODO*/ }, label = { Text(text = "날짜 정렬") })
+        Text( text = "날짜 정렬", modifier = Modifier.padding(end = 8.dp).align(Alignment.CenterVertically))
 
         LazyRow {
-            itemsIndexed(
-                items = textList
-            ) { _,  text ->
+            itemsIndexed(textList) { index, text ->
+                val isSelected = if (index == 0) selectedAsc else selectedDesc
                 FilterChip(
-                    selected = selected,
+                    modifier = Modifier.padding(end = 10.dp),
+                    selected = isSelected,
                     onClick = {
-                        selected = !selected
-                        onClick(selected, text)
+                        if (index == 0) {
+                            // "오름차순" 선택 시
+                            selectedAsc = true
+                            selectedDesc = false
+                            onClick("오름차순")
+                        } else {
+                            // "내림차순" 선택 시
+                            selectedAsc = false
+                            selectedDesc = true
+                            onClick("내림차순")
+                        }
                     },
                     label = { Text(text) },
-                    leadingIcon =
-                    if (selected) {
+                    leadingIcon = if (isSelected) {
                         {
                             Icon(
                                 imageVector = Icons.Filled.Done,
-                                contentDescription = "Localized Description",
+                                contentDescription = "Selected",
                                 modifier = Modifier.size(FilterChipDefaults.IconSize)
                             )
                         }
-                    } else {
-                        null
-                    }
+                    } else null
                 )
             }
         }
@@ -535,14 +550,14 @@ fun HomeFinancialItem(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "수입 +${item.income?.toString() ?: "0"}",
+                            text = "수입 +${numberFormat(item.income ?: 0L)}원",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.onSecondary
                             //color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "지출 -${item.expenditure?.toString() ?: "0"}",
+                            text = "지출 -${numberFormat(item.expenditure ?: 0L)}원",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.secondary

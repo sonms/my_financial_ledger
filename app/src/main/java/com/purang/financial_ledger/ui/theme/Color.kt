@@ -30,4 +30,7 @@ val pink7 = Color(0xFF8F6E78)
 val blueExDark = Color(0xFF2196F3)
 val blueExLight = Color(0xFF216EF3)
 val redInDark = Color(0xFFFDB0C7)
-val redInLight = Color(0xFFFC4178)
+val redInLight = Color(0xFFCE245D)
+
+val redD = Color(0xFFC7235B)
+val blueD = Color(0xFF3F51B5)
