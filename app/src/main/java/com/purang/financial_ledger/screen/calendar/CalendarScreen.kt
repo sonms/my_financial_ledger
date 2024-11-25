@@ -10,8 +10,10 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -54,10 +57,13 @@ import com.purang.financial_ledger.screen.home.MonthDropDownButtonBottomSheet
 import com.purang.financial_ledger.ui.theme.blueExDark
 import com.purang.financial_ledger.ui.theme.blueExLight
 import com.purang.financial_ledger.ui.theme.blueP3
+import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.redInDark
 import com.purang.financial_ledger.view_model.HomeViewModel
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
 import java.time.YearMonth
+import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -82,6 +88,7 @@ fun CalendarScreen(
 
     val yearMonths by viewModel.getDistinctYearMonthsData.observeAsState(emptyList())
     var selectMonth by remember { mutableStateOf(YearMonth.now().toString()) }
+
     var beforeYearMonthDataCheck by remember {
         mutableStateOf<Long?>(null)
     }
@@ -208,7 +215,9 @@ fun CompareBeforeYearMonthTotalAmount(beforeYearMonthDataCheck : Long?) {
         Column (
             modifier = Modifier
                 .fillMaxWidth()
+                .wrapContentHeight()
                 .padding(10.dp)
+                .background(blueP5, RoundedCornerShape(6.dp))
         ) {
             Text (
                 text = if ((beforeYearMonthDataCheck.toLong()) >= 0L) {
@@ -237,7 +246,9 @@ fun CompareBeforeMonthTotalAmount(beforeMonthDataCheck : Long?) {
         Column (
             modifier = Modifier
                 .fillMaxWidth()
+                .wrapContentHeight()
                 .padding(10.dp)
+                .background(blueP5, RoundedCornerShape(6.dp))
         ) {
             Text (
                 text = if ((beforeMonthDataCheck.toLong()) >= 0L) {
@@ -260,13 +271,18 @@ fun CompareBeforeMonthTotalAmount(beforeMonthDataCheck : Long?) {
     }
 }
 
+fun numberFormat(amount: Long?): String {
+    val numberFormat = NumberFormat.getNumberInstance(Locale.KOREA) // 한국 로케일 설정
+    return numberFormat.format(amount)
+}
+
 @Composable
 fun GraphDetailInfo(
     data : TotalIncomeExpenditure
 ) {
     Row {
         Text(
-            text = "수입 ${data.totalIncome}",
+            text = "수입 ${numberFormat(data.totalIncome)}원",
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSecondary
         )
@@ -274,7 +290,7 @@ fun GraphDetailInfo(
         Spacer(modifier = Modifier.width(20.dp))
 
         Text(
-            text = "지출  ${data.totalExpenditure}",
+            text = "지출  ${numberFormat(data.totalExpenditure)}원",
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.secondary
         )
