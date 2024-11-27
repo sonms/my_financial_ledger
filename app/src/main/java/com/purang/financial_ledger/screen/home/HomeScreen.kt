@@ -105,7 +105,8 @@ fun HomeScreen(
     navController : NavController,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val monthFinancialData by viewModel.selectedMonthEvents.observeAsState(emptyList())
+    val monthFinancialData by viewModel.sortedMonthEvents.observeAsState(emptyList())
+
     val monthTotalIncomeExpenditure by viewModel.selectedMonthTotals.observeAsState(
         TotalIncomeExpenditure(0, 0)
     )
@@ -127,7 +128,7 @@ fun HomeScreen(
     val entireIncome by getEntireIncome(context).collectAsState(initial = "0")
     val entireExpenditure by getEntireExpenditure(context).collectAsState(initial = "0")*/
 
-    var selectMonth by remember { mutableStateOf(YearMonth.now().toString()) }
+    var selectMonth by rememberSaveable { mutableStateOf(YearMonth.now().toString()) }
 
     LaunchedEffect(Unit) {
         val currentMonth = YearMonth.now()
@@ -160,8 +161,10 @@ fun HomeScreen(
                 .wrapContentHeight(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val parsedYearMonth = YearMonth.parse(selectMonth) // "2024-02"를 YearMonth로 변환
+            val formattedText = "${parsedYearMonth.year}년 ${parsedYearMonth.monthValue}월" // 원하는 형식으로 변환
             Text(
-                text = "${YearMonth.now().year}년 ${YearMonth.now().monthValue}월",
+                text = formattedText,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp
             )
@@ -210,6 +213,11 @@ fun HomeScreen(
         if (isFilterOpen) {
             FilterUI { text ->
                 Log.e("filterCheck", text.toString())
+                if (text == "오름차순") {
+                    viewModel.toggleSortOrder(true)
+                } else {
+                    viewModel.toggleSortOrder(false)
+                }
             }
         }
 
@@ -318,7 +326,6 @@ fun HomeScreen(
 
     if (isBottomSheetOpen) {
         val context = LocalContext.current
-        Log.e("test3", "test3")
         MonthDropDownButtonBottomSheet(
             modifier = Modifier.height(160.dp),
             monthData = yearMonths.ifEmpty {
@@ -349,7 +356,9 @@ fun FilterUI(
             .wrapContentHeight()
             .padding(10.dp)
     ) {
-        Text( text = "날짜 정렬", modifier = Modifier.padding(end = 8.dp).align(Alignment.CenterVertically))
+        Text( text = "날짜 정렬", modifier = Modifier
+            .padding(end = 8.dp)
+            .align(Alignment.CenterVertically))
 
         LazyRow {
             itemsIndexed(textList) { index, text ->

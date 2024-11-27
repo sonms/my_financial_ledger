@@ -34,6 +34,11 @@ class FinancialRepository @Inject constructor(private val financialDao: Financia
         return financialDao.getTotalIncomeExpenditureByMonth(year, month)
     }
 
+    fun getSearchDataByCategoryId(categoryId : Long?) : LiveData<List<FinancialEntity>> {
+        return financialDao.getFinancialByCategoryId(categoryId)
+    }
+
+
     // 특정 ID에 해당하는 데이터를 가져오는 함수
     suspend fun getEventsById(id: Long?): FinancialEntity? {
         return id?.let {

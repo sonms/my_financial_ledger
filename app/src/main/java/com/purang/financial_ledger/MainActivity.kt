@@ -101,19 +101,10 @@ fun MainContent(homeViewModel: HomeViewModel) {
         floatingActionButtonPosition = FabPosition.End,
         floatingActionButton = {
             // 특정 라우트에서는 BottomNavigation을 숨깁니다.
-            if (currentRoute == MainActivity.BottomNavItem.Home.screenRoute) {
+            if (currentRoute == MainActivity.BottomNavItem.Home.screenRoute || currentRoute == MainActivity.BottomNavItem.Calendar.screenRoute) {
                 FloatingActionButton(
                     onClick = {
                         navController.navigate("edit_financial")
-                    },
-                    modifier = Modifier.padding(end = 10.dp),
-                ) {
-                    Icon(Icons.Default.Create, contentDescription = "CreateFinancialData")
-                }
-            } else if (currentRoute == MainActivity.BottomNavItem.Calendar.screenRoute) {
-                FloatingActionButton(
-                    onClick = {
-                        navController.navigate("edit_financial?type=edit")
                     },
                     modifier = Modifier.padding(end = 10.dp),
                 ) {
@@ -123,7 +114,11 @@ fun MainContent(homeViewModel: HomeViewModel) {
         },
         bottomBar = {
             // 특정 라우트에서는 BottomNavigation을 숨깁니다.
-            if (currentRoute != "edit_todo") {
+            if (currentRoute !in listOf(
+                    "edit_financial?type={type}&id={id}",
+                    "edit_financial"
+                )
+            ) {
                 BottomNavigation(navController = navController)
             }
         },

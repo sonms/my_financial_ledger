@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
+import androidx.lifecycle.map
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.purang.financial_ledger.model.TotalIncomeExpenditure
@@ -29,6 +30,8 @@ class HomeViewModel @Inject constructor(
 
     val getDistinctYearMonthsData : LiveData<List<String>> = financialRepo.getDistinctYearMonths()
 
+
+
     // 현재 선택된 날짜를 저장하는 LiveData
     private val _selectedDate = MutableLiveData<String>()
     val selectedDate: LiveData<String> get() = _selectedDate
@@ -42,6 +45,7 @@ class HomeViewModel @Inject constructor(
     private val _selectedMonth = MutableLiveData<YearMonth>()
     private val _selectedBeforeYearMonth = MutableLiveData<YearMonth>()
     private val _selectedBeforeMonth = MutableLiveData<YearMonth>()
+    private val _categoryId = MutableLiveData<Long?>()
 
     // LiveData that fetches events for the selected month
     @RequiresApi(Build.VERSION_CODES.O)
@@ -49,6 +53,19 @@ class HomeViewModel @Inject constructor(
         val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
         Log.e("SelectedMonth", "Fetching events for: ${month.year}-$formattedMonth")
         financialRepo.getEventsByMonth(month.year.toString(), formattedMonth)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    val sortedMonthEvents: LiveData<List<FinancialEntity>> = selectedMonthEvents.map { events ->
+        if (isAscending) events.sortedBy { it.date }
+        else events.sortedByDescending { it.date }
+    }
+
+    private var isAscending = true //true = 오름, false = 내림
+
+    fun toggleSortOrder(isSortCheck : Boolean) {
+        isAscending = isSortCheck
+        _selectedMonth.value = _selectedMonth.value // 트리거
     }
 
     // Function to set the selected month
@@ -62,6 +79,15 @@ class HomeViewModel @Inject constructor(
 
     fun fetchBeforeByMonth(yearMonth: YearMonth) {
         _selectedBeforeYearMonth.value = yearMonth
+    }
+
+    fun fetchCategoryId(categoryId: Long?) {
+        _categoryId.value = categoryId
+    }
+
+    //카테고리 id로 데이터 가져오기
+    val getFinancialDataByCategoryId : LiveData<List<FinancialEntity>> = _categoryId.switchMap {
+        financialRepo.getSearchDataByCategoryId(it)
     }
 
 
