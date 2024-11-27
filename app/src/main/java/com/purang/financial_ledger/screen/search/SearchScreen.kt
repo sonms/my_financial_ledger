@@ -11,28 +11,40 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.purang.financial_ledger.room_db.FinancialEntity
+import com.purang.financial_ledger.screen.calendar.numberFormat
 import com.purang.financial_ledger.screen.home.HomeFinancialItem
 import com.purang.financial_ledger.ui.theme.blueP3
+import com.purang.financial_ledger.ui.theme.redInDark
 import com.purang.financial_ledger.view_model.HomeViewModel
 
 @Composable
@@ -42,10 +54,17 @@ fun SearchScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val allFinancialData by viewModel.financialListData.observeAsState(emptyList())
+
+
+    var topSearchText by remember {
+        mutableStateOf(searchText)
+    }
+    val focusManager = LocalFocusManager.current
+
     // 필터링된 데이터 - derivedStateOf
-    //의존 상태가 변경되지 않으면 파생 상태를 재계산하지 않도록 보장합니다.
+    //의존 상태(매개변수들)가 변경되지 않으면 파생 상태를 재계산하지 않도록 보장합니다.
     //이는 큰 데이터 집합의 필터링이나 복잡한 계산 로직에 특히 유용합니다.
-    val filteredData by remember(searchText, allFinancialData) {
+    val filteredData by remember(topSearchText, allFinancialData) {
         derivedStateOf {
             if (searchText?.isEmpty() == true) {
                 allFinancialData
@@ -78,6 +97,30 @@ fun SearchScreen(
                     Icon(Icons.Default.ArrowBack, contentDescription = "backScreen")
                 }
             }
+
+            OutlinedTextField(
+                value = topSearchText.toString(),
+                onValueChange = { newText : String ->
+                    // 숫자인지 검증
+                    topSearchText = newText
+                },
+                singleLine = false,
+                textStyle = TextStyle (
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Normal,
+                ),
+                modifier = Modifier
+                    .padding(10.dp),
+                keyboardOptions = KeyboardOptions(
+                    //keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done // 완료 버튼 표시
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                    }
+                )
+            )
         }
 
         if (filteredData.isNotEmpty()) {
@@ -92,7 +135,10 @@ fun SearchScreen(
             }
         } else {
             Text(
-                modifier = Modifier.fillMaxSize().padding(10.dp).align(Alignment.CenterHorizontally),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(10.dp)
+                    .align(Alignment.CenterHorizontally),
                 text = "검색된 데이터가 없습니다.",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
