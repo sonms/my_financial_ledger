@@ -27,6 +27,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -70,12 +71,15 @@ import com.purang.financial_ledger.MainActivity
 import com.purang.financial_ledger.R
 import com.purang.financial_ledger.loading.DialogState
 import com.purang.financial_ledger.room_db.category.CategoryEntity
+import com.purang.financial_ledger.screen.calendar.numberFormat
 import com.purang.financial_ledger.ui.theme.Pink80
 import com.purang.financial_ledger.ui.theme.Purple80
+import com.purang.financial_ledger.ui.theme.blueExDark
 import com.purang.financial_ledger.ui.theme.blueP2
 import com.purang.financial_ledger.ui.theme.blueP3
 import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.blueP6
+import com.purang.financial_ledger.ui.theme.redInDark
 import com.purang.financial_ledger.view_model.CategoryViewModel
 import com.purang.financial_ledger.view_model.HomeViewModel
 import java.text.ParseException
@@ -158,6 +162,23 @@ fun EditFinancialScreen(
             .fillMaxWidth()
             .wrapContentHeight()
     ) {
+        Row (
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Column(
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .wrapContentSize()
+                        .align(Alignment.Top),
+                    horizontalAlignment = Alignment.Start
+                ) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "backScreen")
+                }
+            }
+        }
+
         LazyColumn(
             Modifier.fillMaxSize()
         ) {
@@ -374,12 +395,12 @@ fun EditTitle(
             )
         )
 
-        Spacer(
+        /*Spacer(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
                 .background(blueP2)
-        )
+        )*/
     }
 }
 
@@ -419,12 +440,12 @@ fun EditContent(
             )
         )
 
-        Spacer(
+        /*Spacer(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(1.dp)
                 .background(blueP2)
-        )
+        )*/
     }
 }
 
@@ -436,9 +457,6 @@ fun EditCalendar(
     onClickCancel: () -> Unit,
     onClickConfirm: (yyyyMMdd: String) -> Unit
 ) { //날짜 설정 칸?
-    var selectedDate by remember {
-        mutableStateOf(selectDate ?: LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")))
-    }
     val isDialogShowing by DialogState.isShowing.collectAsState()
 
 
@@ -472,7 +490,7 @@ fun EditCalendar(
                 .fillMaxWidth()
                 .wrapContentHeight(),
         ) {
-            val currentDate = LocalDate.now()
+            /*val currentDate = LocalDate.now()
             val formatter = SimpleDateFormat("yyyyMMdd", Locale.getDefault()).apply {
                 timeZone = TimeZone.getTimeZone("UTC")
             }
@@ -482,10 +500,10 @@ fun EditCalendar(
                 SimpleDateFormat("yyyyMMdd", Locale.KOREAN).parse(selectedDate)
             } catch (e: ParseException) {
                 formatter  // 날짜 파싱에 실패할 경우 현재 날짜를 사용
-            }
+            }*/
             Text(
-                modifier = Modifier.padding(start = 10.dp),
-                text = SimpleDateFormat("yyyy-MM-dd", Locale.KOREAN).format(parsedDate ?: formatter),
+                modifier = Modifier.padding(10.dp),
+                text = (selectDate ?: LocalDate.now().toString()),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold
             )
@@ -498,7 +516,7 @@ fun EditCalendar(
                     .clickable {
                         DialogState.show()
                     }
-                    .padding(end = 10.dp)
+                    .padding(10.dp)
             )
         }
     }
@@ -508,7 +526,7 @@ fun EditCalendar(
 
     if (isDialogShowing) {
         DatePickerDialog(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.wrapContentSize(),
             onDismissRequest = { onClickCancel() },
             confirmButton = { },
             colors = DatePickerDefaults.colors(
@@ -604,8 +622,8 @@ fun EditCalendar(
                             ).format(Date(selectedDateMillis))
 
                             // 날짜 확인 로그
-                            Log.d("SelectedDate", selectedDateFormatted)  // 확인용 로그
-                            selectedDate = selectedDateFormatted
+                            /*Log.d("SelectedDate", selectedDateFormatted)  // 확인용 로그
+                            selectedDate = selectedDateFormatted*/
                             onClickConfirm(selectedDateFormatted)
                             DialogState.hide()
                         }
@@ -754,7 +772,7 @@ fun EditTransaction(
         Column (
             modifier = Modifier
                 .weight(1f)
-                .background(Purple80, RoundedCornerShape(12.dp))
+                .background(redInDark, RoundedCornerShape(12.dp))
                 .padding(5.dp)
         ) {
             Text(
@@ -765,7 +783,7 @@ fun EditTransaction(
             )
 
             OutlinedTextField(
-                value = textContentIncome,
+                value = numberFormat(textContentIncome.toLongOrNull()),
                 onValueChange = { newText : String ->
                     // 숫자인지 검증
                     if (newText.all { it.isDigit() }) {
@@ -790,8 +808,8 @@ fun EditTransaction(
                     }
                 ),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Purple80,
-                    unfocusedBorderColor = Purple80
+                    focusedBorderColor = redInDark,
+                    unfocusedBorderColor = redInDark
                 )
             )
         }
@@ -799,7 +817,7 @@ fun EditTransaction(
         Column (
             modifier = Modifier
                 .weight(1f)
-                .background(Pink80, RoundedCornerShape(12.dp))
+                .background(blueExDark, RoundedCornerShape(12.dp))
                 .padding(5.dp)
         ){
             Text(
@@ -810,7 +828,7 @@ fun EditTransaction(
             )
 
             OutlinedTextField(
-                value = textContentExpenditure,
+                value = numberFormat(textContentExpenditure.toLongOrNull()),
                 onValueChange = { newText : String ->
                     // 숫자인지 검증
                     if (newText.all { it.isDigit() }) {
@@ -833,8 +851,8 @@ fun EditTransaction(
                     onDone = { focusManager.clearFocus() }
                 ),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Pink80,
-                    unfocusedBorderColor = Pink80
+                    focusedBorderColor = blueExDark,
+                    unfocusedBorderColor = blueExDark
                 )
             )
         }
