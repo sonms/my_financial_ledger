@@ -9,6 +9,7 @@ import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +26,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -35,6 +40,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -53,12 +59,15 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.purang.financial_ledger.model.TotalIncomeExpenditure
+import com.purang.financial_ledger.room_db.FinancialEntity
+import com.purang.financial_ledger.room_db.category.CategoryEntity
 import com.purang.financial_ledger.screen.home.MonthDropDownButtonBottomSheet
 import com.purang.financial_ledger.ui.theme.blueExDark
 import com.purang.financial_ledger.ui.theme.blueExLight
 import com.purang.financial_ledger.ui.theme.blueP3
 import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.redInDark
+import com.purang.financial_ledger.view_model.CategoryViewModel
 import com.purang.financial_ledger.view_model.HomeViewModel
 import kotlinx.coroutines.launch
 import java.text.NumberFormat
@@ -70,6 +79,7 @@ import java.util.Locale
 fun CalendarScreen(
     //navController: NavController,
     viewModel: HomeViewModel = hiltViewModel(),
+    categoryViewModel : CategoryViewModel = hiltViewModel()
 ) {
     val monthTotalIncomeExpenditure by viewModel.selectedMonthTotals.observeAsState(
         TotalIncomeExpenditure(0, 0)
@@ -80,6 +90,12 @@ fun CalendarScreen(
     )
 
     val monthBeforeTotalByMonth by viewModel.selectedBeforeMonthTotals.observeAsState(initial = TotalIncomeExpenditure(0, 0))
+
+    val selectFinancialDataByCategoryId by viewModel.getFinancialDataByCategoryId.observeAsState(
+        emptyList()
+    )
+
+    val categoryAllData by categoryViewModel.categoryData.observeAsState(emptyList())
 
     var isEmotionBottomSheetOpen by remember { mutableStateOf(false) }
     var isClickGraphInfo by remember {
@@ -97,10 +113,17 @@ fun CalendarScreen(
         mutableStateOf<Long?>(null)
     }
 
+    var selectCategoryId by remember {
+        mutableStateOf<Long?>(null)
+    }
+
     LaunchedEffect(Unit) {
         val yearMonth = YearMonth.parse(selectMonth)
         viewModel.fetchBeforeByYearMonth(yearMonth)
         viewModel.fetchBeforeByMonth(yearMonth)
+
+        //카테고리
+        viewModel.fetchCategoryId(selectCategoryId)
 
         beforeYearMonthDataCheck = monthBeforeTotalIncomeExpenditure.totalExpenditure?.let {
             monthBeforeTotalIncomeExpenditure.totalIncome?.minus(
@@ -140,8 +163,10 @@ fun CalendarScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
+            val parsedYearMonth = YearMonth.parse(selectMonth) // "2024-02"를 YearMonth로 변환
+            val formattedText = "${parsedYearMonth.year}년 ${parsedYearMonth.monthValue}월" // 원하는 형식으로 변환
             Text(
-                text = "${YearMonth.now().year}년 ${YearMonth.now().monthValue}월",
+                text = formattedText,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp
             )
@@ -188,7 +213,10 @@ fun CalendarScreen(
             Text(text = "해당 월에 데이터가 존재하지 않습니다.")
         }
 
-
+        CategoryChartScreen(
+            selectFinancialDataByCategoryId,
+            categoryAllData
+        )
     }
     //
 
@@ -453,3 +481,133 @@ fun GraphInfo(
         }
     }
 }
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun CategoryChartScreen(
+    selectFinancialDataByCategoryId : List<FinancialEntity>,
+    categoryData : List<CategoryEntity>
+) {
+    LazyColumn(
+        modifier = Modifier.padding(10.dp)
+    ) {
+        stickyHeader {
+            CategoryStickyHeader(categoryData = categoryData)
+        }
+
+        //전체 차트를 init으로 설정 <-> 카테고리 선택 시 변경하도록
+        /*items(
+            selectFinancialDataByCategoryId
+        ) {
+
+        }*/
+        item {
+            GraphByCategory(selectFinancialDataByCategoryId)
+        }
+    }
+}
+
+@Composable
+fun GraphByCategory(
+    selectFinancialDataByCategoryId : List<FinancialEntity>
+) {
+    val categoryTotalIncome by derivedStateOf {
+        selectFinancialDataByCategoryId.sumOf { it.income ?: 0L }
+    }
+
+    val categoryTotalExpenditure by derivedStateOf {
+        selectFinancialDataByCategoryId.sumOf { it.expenditure ?: 0L }
+    }
+
+    val categoryTotalIncomeExpenditure by remember {
+        mutableStateOf(TotalIncomeExpenditure(categoryTotalIncome, categoryTotalExpenditure))
+    }
+
+    var isClickGraphInfo by remember {
+        mutableStateOf(false)
+    }
+
+    if (categoryTotalIncome != 0L || categoryTotalExpenditure != 0L) {
+        TotalGraph(
+            modifier = Modifier.padding(bottom = 20.dp),
+            colors = listOf(redInDark,blueExDark),
+            data = listOf(
+                (categoryTotalIncome / (categoryTotalIncome + categoryTotalExpenditure).toFloat()),
+                (categoryTotalExpenditure / (categoryTotalIncome + categoryTotalExpenditure).toFloat())
+            ),
+            graphHeight = 120,
+            onClick = {
+                isClickGraphInfo = !isClickGraphInfo
+            }
+        )
+
+        if (isClickGraphInfo) {
+            GraphDetailInfo(data = categoryTotalIncomeExpenditure)
+        }
+
+        GraphInfo(categoryTotalIncomeExpenditure)
+
+    } else {
+        Text(text = "해당 카테고리에 데이터가 존재하지 않습니다.")
+    }
+}
+
+@Composable
+fun CategoryStickyHeader(categoryData: List<CategoryEntity>) {
+    // 선택된 카테고리를 관리하는 상태
+    var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
+
+    Row (modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
+        Text(
+            text = "카테고리",
+            modifier = Modifier.align(Alignment.CenterVertically).padding(end = 10.dp)
+        )
+
+        LazyRow {
+            itemsIndexed(items = categoryData) { _, item ->
+                // CategoryItem에 선택 상태와 선택 이벤트 전달
+                CategoryItem(
+                    item = item,
+                    isSelected = item.id == selectedCategoryId,
+                    onItemSelected = { selectedId ->
+                        selectedCategoryId = selectedId
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CategoryItem(
+    item: CategoryEntity,
+    isSelected: Boolean,
+    onItemSelected: (Long) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .wrapContentSize()
+            .padding(5.dp)
+            .background(
+                if (isSelected) blueP3 else blueExLight,
+                RoundedCornerShape(8.dp)
+            )
+            .clickable {
+                onItemSelected(item.id) // 선택된 ID를 부모에게 전달
+            }
+    ) {
+        Text(
+            text = item.categoryName,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(10.dp)
+        )
+    }
+}
+/*
+@Composable
+fun DataForCategory(
+    item : FinancialEntity
+) {
+
+}*/
