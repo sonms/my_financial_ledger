@@ -5,8 +5,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -42,6 +46,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.purang.financial_ledger.room_db.FinancialEntity
 import com.purang.financial_ledger.screen.calendar.numberFormat
+import com.purang.financial_ledger.screen.home.DeleteItemDialog
 import com.purang.financial_ledger.screen.home.HomeFinancialItem
 import com.purang.financial_ledger.ui.theme.blueP3
 import com.purang.financial_ledger.ui.theme.redInDark
@@ -50,7 +55,7 @@ import com.purang.financial_ledger.view_model.HomeViewModel
 @Composable
 fun SearchScreen(
     navController: NavController,
-    searchText : String?,
+    searchText : String,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val allFinancialData by viewModel.financialListData.observeAsState(emptyList())
@@ -66,15 +71,22 @@ fun SearchScreen(
     //이는 큰 데이터 집합의 필터링이나 복잡한 계산 로직에 특히 유용합니다.
     val filteredData by remember(topSearchText, allFinancialData) {
         derivedStateOf {
-            if (searchText?.isEmpty() == true) {
+            if (searchText.isEmpty()) {
                 allFinancialData
             } else {
                 allFinancialData.filter { item ->
-                    item.title?.contains(searchText!!, ignoreCase = true) == true ||
-                            item.content?.contains(searchText!!, ignoreCase = true) == true
+                    item.title?.contains(topSearchText, ignoreCase = true) == true ||
+                            item.content?.contains(topSearchText, ignoreCase = true) == true
                 }
             }
         }
+    }
+
+    var isDeleteDialogOpen by remember {
+        mutableStateOf(false)
+    }
+    var deleteItem by remember {
+        mutableStateOf<FinancialEntity?>(null)
     }
 
     Column (
@@ -82,37 +94,38 @@ fun SearchScreen(
             .fillMaxSize()
             .padding(10.dp)
     ) {
-        Row (
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.Start
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically, // 수직 정렬: 가운데 정렬
+            horizontalArrangement = Arrangement.Start // 가로 방향 정렬: 시작 정렬
         ) {
             IconButton(onClick = { navController.popBackStack() }) {
-                Column(
-                    modifier = Modifier
-                        .padding(5.dp)
-                        .wrapContentSize()
-                        .align(Alignment.Top),
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "backScreen")
-                }
+                Icon(
+                    Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    modifier = Modifier.size(24.dp) // 아이콘 크기 조정
+                )
             }
 
+            Spacer(modifier = Modifier.width(8.dp)) // 아이콘과 텍스트 필드 간격
+
             OutlinedTextField(
-                value = topSearchText.toString(),
-                onValueChange = { newText : String ->
-                    // 숫자인지 검증
+                value = topSearchText,
+                onValueChange = { newText ->
                     topSearchText = newText
+                    Log.e("topSearchText", "$newText $topSearchText")
                 },
-                singleLine = false,
-                textStyle = TextStyle (
+                singleLine = true, // 텍스트 필드를 한 줄로 제한
+                textStyle = TextStyle(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Normal,
                 ),
                 modifier = Modifier
-                    .padding(10.dp),
+                    .weight(1f) // 나머지 공간을 차지하도록 설정
+                    .padding(start = 8.dp),
                 keyboardOptions = KeyboardOptions(
-                    //keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Done // 완료 버튼 표시
                 ),
                 keyboardActions = KeyboardActions(
@@ -128,9 +141,16 @@ fun SearchScreen(
                 itemsIndexed(
                     items = filteredData
                 ) { _, item ->
-                    HomeFinancialItem(item = item, onItemClick = {
-                        navController.navigate("edit_financial?type=edit&id=${item.id}")
-                    })
+                    HomeFinancialItem(
+                        item = item,
+                        onItemClick = {
+                            navController.navigate("edit_financial?type=edit&id=${item.id}")
+                        },
+                        onLongClick = {
+                            isDeleteDialogOpen = !isDeleteDialogOpen
+                            deleteItem = it
+                        }
+                    )
                 }
             }
         } else {
@@ -144,5 +164,20 @@ fun SearchScreen(
                 fontWeight = FontWeight.Bold
             )
         }
+    }
+
+    if (isDeleteDialogOpen) {
+        DeleteItemDialog(
+            item = deleteItem,
+            onConfirmClick = {
+                if (it != null) {
+                    isDeleteDialogOpen = !isDeleteDialogOpen
+                    viewModel.deleteFinancialData(it)
+                }
+            },
+            onCancelClick = {
+                isDeleteDialogOpen = !isDeleteDialogOpen
+            }
+        )
     }
 }

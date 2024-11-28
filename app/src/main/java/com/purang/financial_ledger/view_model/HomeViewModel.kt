@@ -202,4 +202,10 @@ class HomeViewModel @Inject constructor(
             financialRepo.updateData(newTodo)
         }
     }
+
+    fun deleteFinancialData(financialEntity: FinancialEntity) {
+        viewModelScope.launch {
+            financialRepo.deleteDataById(financialEntity.id)
+        }
+    }
 }

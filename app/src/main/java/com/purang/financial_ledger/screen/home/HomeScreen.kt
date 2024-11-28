@@ -8,9 +8,11 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,6 +37,9 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -77,6 +82,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.purang.financial_ledger.R
@@ -89,6 +95,7 @@ import com.purang.financial_ledger.ui.theme.blueExDark
 import com.purang.financial_ledger.ui.theme.blueExLight
 import com.purang.financial_ledger.ui.theme.blueP2
 import com.purang.financial_ledger.ui.theme.blueP3
+import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.ui.theme.blueP7
 import com.purang.financial_ledger.ui.theme.pink5
@@ -116,6 +123,12 @@ fun HomeScreen(
     }
     var isFilterOpen by remember {
         mutableStateOf(false)
+    }
+    var isDeleteDialogOpen by remember {
+        mutableStateOf(false)
+    }
+    var deleteItem by remember {
+        mutableStateOf<FinancialEntity?>(null)
     }
 
     val yearMonths by viewModel.getDistinctYearMonthsData.observeAsState(emptyList())
@@ -316,11 +329,33 @@ fun HomeScreen(
 
             // 현재 선택된 달의 가계부 내역
             itemsIndexed(items = monthFinancialData) { _, item ->
-                HomeFinancialItem(item = item) { financialItem ->
-                    Log.e("item", financialItem.toString())
-                    navController.navigate("edit_financial?type=edit&id=${financialItem.id}")
-                }
+                HomeFinancialItem(
+                    item = item,
+                    onItemClick = { financialItem ->
+                        Log.e("item", financialItem.toString())
+                        navController.navigate("edit_financial?type=edit&id=${financialItem.id}")
+                    },
+                    onLongClick = {
+                        isDeleteDialogOpen = !isDeleteDialogOpen
+                        deleteItem = it
+                    }
+                )
             }
+        }
+
+        if (isDeleteDialogOpen) {
+            DeleteItemDialog(
+                item = deleteItem,
+                onCancelClick = {
+                    isDeleteDialogOpen = !isDeleteDialogOpen
+                },
+                onConfirmClick = {
+                    if (it != null) {
+                        isDeleteDialogOpen = !isDeleteDialogOpen
+                        viewModel.deleteFinancialData(it)
+                    }
+                }
+            )
         }
     }
 
@@ -507,10 +542,12 @@ fun MonthDropDownButtonBottomSheet(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeFinancialItem(
     item: FinancialEntity,
-    onItemClick: (FinancialEntity) -> Unit
+    onItemClick: (FinancialEntity) -> Unit,
+    onLongClick: (FinancialEntity) -> Unit
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
 
@@ -525,9 +562,14 @@ fun HomeFinancialItem(
                         stiffness = Spring.StiffnessLow
                     )
                 )
-                .clickable {
-                    onItemClick(item) // handle click and pass item data
-                }
+                .combinedClickable(
+                    onClick = {
+                        onItemClick(item) // handle click and pass item data
+                    },
+                    onLongClick = {
+                        onLongClick(item)
+                    },
+                )
                 .background(
                     color = if (expanded) MaterialTheme.colorScheme.primary//열릴때
                     else MaterialTheme.colorScheme.tertiary, //기본
@@ -604,6 +646,58 @@ fun HomeFinancialItem(
     }
 }
 
+@Composable
+fun DeleteItemDialog(
+    item : FinancialEntity?,
+    onConfirmClick : (FinancialEntity?) -> Unit,
+    onCancelClick : () -> Unit
+) {
+    Dialog(
+        onDismissRequest = { onCancelClick() }
+    ) {
+        Card (
+            modifier = Modifier
+                .width(320.dp)
+                .wrapContentHeight()
+                .padding(10.dp),
+            shape = RoundedCornerShape(8.dp),
+        ) {
+            Text(
+                modifier = Modifier.padding(top = 20.dp, start = 20.dp, bottom = 10.dp),
+                text = "정말 삭제하시겠습니까?",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Row (
+                modifier = Modifier.align(Alignment.End).padding(20.dp)
+            ) {
+                Button(
+                    modifier = Modifier.padding(end = 5.dp),
+                    onClick = { onCancelClick() },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = blueP5, // 버튼 배경색
+                        contentColor = Color.White // 텍스트 색상 설정
+                    ),
+                ) {
+                    Text(text = "취소")
+                }
+
+                Button(
+                    onClick = { onConfirmClick(item) },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = blueP5, // 버튼 배경색
+                        contentColor = Color.White // 텍스트 색상 설정
+                    ),
+                ) {
+                    Text(text = "확인")
+                }
+            }
+        }
+    }
+}
+
+/*
 @RequiresApi(Build.VERSION_CODES.O)
 @Preview
 @Composable
@@ -621,4 +715,4 @@ fun preview() {
 
         })
     }
-}
+}*/
