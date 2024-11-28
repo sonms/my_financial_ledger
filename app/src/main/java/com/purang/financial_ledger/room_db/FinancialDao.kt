@@ -66,7 +66,12 @@ interface FinancialDao {
 
     ///////////////////////////////////////
     //category 카테고리
-    @Query("SELECT * FROM FinancialTable WHERE categoryId = :categoryId")
+    @Query("""
+    SELECT * 
+    FROM FinancialTable 
+    WHERE (:categoryId IS NULL AND categoryId IS NULL) 
+       OR (categoryId = :categoryId)
+""")
     fun getFinancialByCategoryId(categoryId: Long?): LiveData<List<FinancialEntity>>
 
     // 예를 들어, Category가 삭제될 때 ForeignKey.SET_NULL로 인해 categoryId가 null인 데이터를 조회하는 쿼리도 작성할 수 있습니다.

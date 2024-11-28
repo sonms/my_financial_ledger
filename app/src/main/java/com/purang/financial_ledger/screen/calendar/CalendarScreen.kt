@@ -148,6 +148,11 @@ fun CalendarScreen(
             }
         }
     }
+    
+    LaunchedEffect(selectCategoryId) {
+        viewModel.fetchCategoryId(selectCategoryId)
+        Log.e("fetchCategoryId", selectFinancialDataByCategoryId.toString())
+    }
 
     Column (
         modifier = Modifier
@@ -216,7 +221,9 @@ fun CalendarScreen(
         CategoryChartScreen(
             selectFinancialDataByCategoryId,
             categoryAllData
-        )
+        ) {
+            selectCategoryId = it
+        }
     }
     //
 
@@ -485,14 +492,22 @@ fun GraphInfo(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CategoryChartScreen(
-    selectFinancialDataByCategoryId : List<FinancialEntity>,
-    categoryData : List<CategoryEntity>
+    selectFinancialDataByCategoryId : List<FinancialEntity>?,
+    categoryData : List<CategoryEntity>,
+    onCategoryClick: (Long?) -> Unit
 ) {
     LazyColumn(
-        modifier = Modifier.padding(10.dp)
+        modifier = Modifier.padding(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         stickyHeader {
-            CategoryStickyHeader(categoryData = categoryData)
+            CategoryStickyHeader(
+                categoryData = categoryData,
+                onCategoryClick = {
+                    onCategoryClick(it)
+                }
+            )
         }
 
         //전체 차트를 init으로 설정 <-> 카테고리 선택 시 변경하도록
@@ -502,7 +517,11 @@ fun CategoryChartScreen(
 
         }*/
         item {
-            GraphByCategory(selectFinancialDataByCategoryId)
+            if (selectFinancialDataByCategoryId?.isNotEmpty() == true) {
+                GraphByCategory(selectFinancialDataByCategoryId = selectFinancialDataByCategoryId)
+            } else {
+                Text(text = "해당 카테고리에 데이터가 존재하지 않습니다.")
+            }
         }
     }
 }
@@ -529,7 +548,7 @@ fun GraphByCategory(
 
     if (categoryTotalIncome != 0L || categoryTotalExpenditure != 0L) {
         TotalGraph(
-            modifier = Modifier.padding(bottom = 20.dp),
+            modifier = Modifier.padding(bottom = 20.dp, top = 10.dp),
             colors = listOf(redInDark,blueExDark),
             data = listOf(
                 (categoryTotalIncome / (categoryTotalIncome + categoryTotalExpenditure).toFloat()),
@@ -553,14 +572,21 @@ fun GraphByCategory(
 }
 
 @Composable
-fun CategoryStickyHeader(categoryData: List<CategoryEntity>) {
+fun CategoryStickyHeader(
+    categoryData: List<CategoryEntity>,
+    onCategoryClick : (Long?) -> Unit
+) {
     // 선택된 카테고리를 관리하는 상태
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
 
-    Row (modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
+    Row (modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()) {
         Text(
             text = "카테고리",
-            modifier = Modifier.align(Alignment.CenterVertically).padding(end = 10.dp)
+            modifier = Modifier
+                .align(Alignment.CenterVertically)
+                .padding(end = 10.dp)
         )
 
         LazyRow {
@@ -570,7 +596,12 @@ fun CategoryStickyHeader(categoryData: List<CategoryEntity>) {
                     item = item,
                     isSelected = item.id == selectedCategoryId,
                     onItemSelected = { selectedId ->
-                        selectedCategoryId = selectedId
+                        selectedCategoryId = if (selectedCategoryId != selectedId) {
+                            selectedId
+                        } else {
+                            null
+                        }
+                        onCategoryClick(selectedCategoryId)
                     }
                 )
             }
