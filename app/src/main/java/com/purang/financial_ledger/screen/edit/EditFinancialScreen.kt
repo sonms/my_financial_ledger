@@ -783,7 +783,7 @@ fun EditTransaction(
             )
 
             OutlinedTextField(
-                value = numberFormat(textContentIncome.toLongOrNull()),
+                value = textContentIncome,
                 onValueChange = { newText : String ->
                     // 숫자인지 검증
                     if (newText.all { it.isDigit() }) {
@@ -828,7 +828,7 @@ fun EditTransaction(
             )
 
             OutlinedTextField(
-                value = numberFormat(textContentExpenditure.toLongOrNull()),
+                value = textContentExpenditure,
                 onValueChange = { newText : String ->
                     // 숫자인지 검증
                     if (newText.all { it.isDigit() }) {
