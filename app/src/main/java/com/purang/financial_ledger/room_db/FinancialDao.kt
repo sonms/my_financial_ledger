@@ -45,6 +45,24 @@ interface FinancialDao {
 """)
     fun getBeforeTotalIncomeExpenditureByYearMonth(year: String, month: String): LiveData<TotalIncomeExpenditure>
 
+    /*@Query("""
+    SELECT * FROM FinancialTable 
+    WHERE strftime('%Y', date) = :year 
+    AND strftime('%m', date) = :month 
+    AND (categoryId = :categoryId OR (:categoryId IS NULL AND categoryId IS NULL)) 
+    ORDER BY date DESC
+""")*/ // 이건 categoryId = null일 때도 적용되게
+
+    //categoryd = null이면 해당달의 데이터만
+    @Query("""
+    SELECT * FROM FinancialTable
+    WHERE strftime('%Y', date) = :year 
+      AND strftime('%m', date) = :month
+      AND (:categoryId IS NULL OR categoryId = :categoryId)
+    ORDER BY date DESC
+""")
+    fun getEventsByMonthAndCategory(year: String, month: String, categoryId: Long?): LiveData<List<FinancialEntity>>
+
 
     @Insert
     suspend fun insertFinancialList(financialData: FinancialEntity) // Room과 ViewModel의 비동기 처리 일관성을 위해 suspend로 변경

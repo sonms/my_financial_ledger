@@ -18,8 +18,8 @@ class FinancialRepository @Inject constructor(private val financialDao: Financia
         return financialDao.getDistinctYearMonths()
     }
     //
-    fun getEventsByMonth(year: String, month: String): LiveData<List<FinancialEntity>> {
-        return financialDao.getEventsByMonth(year, month)
+    fun getEventsByMonth(year: String, month: String, categoryId: Long?): LiveData<List<FinancialEntity>> {
+        return financialDao.getEventsByMonthAndCategory(year, month, categoryId)
     }
 
     fun getTotalIncomeExpenditure(year: String, month: String): LiveData<TotalIncomeExpenditure> {

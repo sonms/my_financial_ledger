@@ -88,6 +88,7 @@ import androidx.navigation.NavController
 import com.purang.financial_ledger.R
 import com.purang.financial_ledger.model.TotalIncomeExpenditure
 import com.purang.financial_ledger.room_db.FinancialEntity
+import com.purang.financial_ledger.room_db.category.CategoryEntity
 import com.purang.financial_ledger.screen.calendar.numberFormat
 import com.purang.financial_ledger.ui.theme.Financial_LedgerTheme
 import com.purang.financial_ledger.ui.theme.blueD
@@ -102,6 +103,7 @@ import com.purang.financial_ledger.ui.theme.pink5
 import com.purang.financial_ledger.ui.theme.redD
 import com.purang.financial_ledger.ui.theme.redInDark
 import com.purang.financial_ledger.ui.theme.redInLight
+import com.purang.financial_ledger.view_model.CategoryViewModel
 import com.purang.financial_ledger.view_model.HomeViewModel
 import java.net.URLEncoder
 import java.time.YearMonth
@@ -110,13 +112,17 @@ import java.time.YearMonth
 @Composable
 fun HomeScreen(
     navController : NavController,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    categoryViewModel: CategoryViewModel = hiltViewModel()
 ) {
     val monthFinancialData by viewModel.sortedMonthEvents.observeAsState(emptyList())
 
     val monthTotalIncomeExpenditure by viewModel.selectedMonthTotals.observeAsState(
         TotalIncomeExpenditure(0, 0)
     )
+
+    val categoryAllData by categoryViewModel.categoryData.observeAsState(emptyList())
+
     var isBottomSheetOpen by remember { mutableStateOf(false) }
     var isSearchOpen by remember {
         mutableStateOf(false)
@@ -136,6 +142,9 @@ fun HomeScreen(
     var searchText by remember {
         mutableStateOf("")
     }
+    var selectCategoryId by remember {
+        mutableStateOf<Long?>(null)
+    }
 
     /*val context = LocalContext.current
     val entireIncome by getEntireIncome(context).collectAsState(initial = "0")
@@ -146,8 +155,7 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         val currentMonth = YearMonth.now()
         viewModel.fetchEventsByMonth(currentMonth) // Fetch data for current year and month
-        Log.e("monthTotal", monthTotalIncomeExpenditure.toString())
-        Log.e("monthTotal2", yearMonths.toString())
+        viewModel.fetchCategoryId(selectCategoryId)
     }
 
     LaunchedEffect(selectMonth) {
@@ -224,14 +232,20 @@ fun HomeScreen(
         }
 
         if (isFilterOpen) {
-            FilterUI { text ->
-                Log.e("filterCheck", text.toString())
-                if (text == "오름차순") {
-                    viewModel.toggleSortOrder(true)
-                } else {
-                    viewModel.toggleSortOrder(false)
+            FilterUI(
+                onClick = {
+                    if (it == "오름차순") {
+                        viewModel.toggleSortOrder(true)
+                    } else {
+                        viewModel.toggleSortOrder(false)
+                    }
+                },
+                categoryData = categoryAllData,
+                onCategoryClick = {
+                    selectCategoryId = it
+                    viewModel.fetchCategoryId(it)
                 }
-            }
+            )
         }
 
 
@@ -378,53 +392,101 @@ fun HomeScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilterUI(
-    onClick: (String) -> Unit // 선택된 필터 값을 전달
+    onClick: (String) -> Unit, // 선택된 필터 값을 전달
+    categoryData : List<CategoryEntity>,
+    onCategoryClick : (Long?) -> Unit
 ) {
     var selectedDesc by remember { mutableStateOf(false) }
     var selectedAsc by remember { mutableStateOf(false) }
 
+    var selectedCategoryId by remember {
+        mutableStateOf<Long?>(null)
+    }
+
     val textList = listOf("오름차순", "내림차순")
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(10.dp)
-    ) {
-        Text( text = "날짜 정렬", modifier = Modifier
-            .padding(end = 8.dp)
-            .align(Alignment.CenterVertically))
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(10.dp)
+        ) {
+            Text( text = "날짜 정렬", modifier = Modifier
+                .padding(end = 8.dp)
+                .align(Alignment.CenterVertically))
 
-        LazyRow {
-            itemsIndexed(textList) { index, text ->
-                val isSelected = if (index == 0) selectedAsc else selectedDesc
-                FilterChip(
-                    modifier = Modifier.padding(end = 10.dp),
-                    selected = isSelected,
-                    onClick = {
-                        if (index == 0) {
-                            // "오름차순" 선택 시
-                            selectedAsc = true
-                            selectedDesc = false
-                            onClick("오름차순")
-                        } else {
-                            // "내림차순" 선택 시
-                            selectedAsc = false
-                            selectedDesc = true
-                            onClick("내림차순")
-                        }
-                    },
-                    label = { Text(text) },
-                    leadingIcon = if (isSelected) {
-                        {
-                            Icon(
-                                imageVector = Icons.Filled.Done,
-                                contentDescription = "Selected",
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
-                    } else null
-                )
+            LazyRow {
+                itemsIndexed(textList) { index, text ->
+                    val isSelected = if (index == 0) selectedAsc else selectedDesc
+                    FilterChip(
+                        modifier = Modifier.padding(end = 10.dp),
+                        selected = isSelected,
+                        onClick = {
+                            if (index == 0) {
+                                // "오름차순" 선택 시
+                                selectedAsc = true
+                                selectedDesc = false
+                                onClick("오름차순")
+                            } else {
+                                // "내림차순" 선택 시
+                                selectedAsc = false
+                                selectedDesc = true
+                                onClick("내림차순")
+                            }
+                        },
+                        label = { Text(text) },
+                        leadingIcon = if (isSelected) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Filled.Done,
+                                    contentDescription = "Selected",
+                                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                )
+                            }
+                        } else null
+                    )
+                }
+            }
+        }
+
+        Row (
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(10.dp)
+        ) {
+            Text(
+                text = "카테고리 필터", modifier = Modifier
+                    .padding(end = 8.dp)
+                    .align(Alignment.CenterVertically)
+            )
+
+            LazyRow {
+                itemsIndexed(categoryData) { _, item ->
+                    FilterChip(
+                        modifier = Modifier.padding(end = 10.dp),
+                        selected = item.id == selectedCategoryId,
+                        onClick = {
+                            selectedCategoryId = if (selectedCategoryId != item.id) {
+                                item.id
+                            } else {
+                                null
+                            }
+                            onCategoryClick(selectedCategoryId)
+                        },
+                        label = { Text(item.categoryName) },
+                        /*leadingIcon = if (isSelected) {
+                            {
+                                Icon(
+                                    imageVector = Icons.Filled.Done,
+                                    contentDescription = "Selected",
+                                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                )
+                            }
+                        } else null*/
+                    )
+                }
             }
         }
     }
@@ -670,7 +732,9 @@ fun DeleteItemDialog(
             )
 
             Row (
-                modifier = Modifier.align(Alignment.End).padding(20.dp)
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(20.dp)
             ) {
                 Button(
                     modifier = Modifier.padding(end = 5.dp),

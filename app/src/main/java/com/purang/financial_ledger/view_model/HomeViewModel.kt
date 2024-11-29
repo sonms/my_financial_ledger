@@ -48,18 +48,37 @@ class HomeViewModel @Inject constructor(
     private val _categoryId = MutableLiveData<Long?>()
 
     // LiveData that fetches events for the selected month
-    @RequiresApi(Build.VERSION_CODES.O)
+    /*@RequiresApi(Build.VERSION_CODES.O)
     val selectedMonthEvents: LiveData<List<FinancialEntity>> = _selectedMonth.switchMap { month ->
         val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
         Log.e("SelectedMonth", "Fetching events for: ${month.year}-$formattedMonth")
         financialRepo.getEventsByMonth(month.year.toString(), formattedMonth)
-    }
+    }*/
+    @RequiresApi(Build.VERSION_CODES.O)
+    val selectedMonthEventsWithCategory: LiveData<List<FinancialEntity>> =
+        _selectedMonth.switchMap { month ->
+            _categoryId.switchMap { categoryId ->
+                if (month != null) {
+                    val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
+                    Log.e("SelectedMonth", "Fetching events for: ${month.year}-$formattedMonth, categoryId: $categoryId")
+                    financialRepo.getEventsByMonth(
+                        year = month.year.toString(),
+                        month = formattedMonth,
+                        categoryId = categoryId
+                    )
+                } else {
+                    MutableLiveData(emptyList())
+                }
+            }
+        }
 
     @RequiresApi(Build.VERSION_CODES.O)
-    val sortedMonthEvents: LiveData<List<FinancialEntity>> = selectedMonthEvents.map { events ->
+    val sortedMonthEvents: LiveData<List<FinancialEntity>> = selectedMonthEventsWithCategory.map { events ->
         if (isAscending) events.sortedBy { it.date }
         else events.sortedByDescending { it.date }
     }
+
+
 
     private var isAscending = true //true = 오름, false = 내림
 
