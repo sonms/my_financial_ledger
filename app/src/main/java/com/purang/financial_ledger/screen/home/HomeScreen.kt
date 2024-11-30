@@ -315,7 +315,7 @@ fun HomeScreen(
                         it
                     )
                 } ?: 0L
-                val background = if (entire > 0) {
+                val background = if (entire >= 0) {
                     redD
                 } else {
                     blueD
