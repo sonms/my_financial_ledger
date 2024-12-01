@@ -96,8 +96,11 @@ class HomeViewModel @Inject constructor(
         _selectedBeforeYearMonth.value = yearMonth
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun fetchBeforeByMonth(yearMonth: YearMonth) {
-        _selectedBeforeYearMonth.value = yearMonth
+        _selectedBeforeMonth.value = yearMonth
+        Log.d("ViewModel", "selectedBeforeMonth: ${_selectedBeforeMonth.value}")
+        Log.d("ViewModel", "selectedBeforeMonthTotals: ${selectedBeforeMonthTotals.value}")
     }
 
     fun fetchCategoryId(categoryId: Long?) {
@@ -145,26 +148,40 @@ class HomeViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     val selectedMonthTotals: LiveData<TotalIncomeExpenditure> = _selectedMonth.switchMap { month ->
         val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
-        Log.e("monthTotalIncomeExpenditure", "Fetching events for: ${month.year}-$formattedMonth")
+        Log.e("select1", "Fetching events for: ${month.year}-$formattedMonth")
         financialRepo.getTotalIncomeExpenditure(month.year.toString(), formattedMonth)
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
     val selectedBeforeYearMonthTotals: LiveData<TotalIncomeExpenditure> = _selectedBeforeYearMonth.switchMap { month ->
         val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
-        Log.e("monthTotalIncomeExpenditure", "Fetching events for: ${month.year}-$formattedMonth")
-        financialRepo.getBeforeTotalIncomeExpenditureByYearMonth((month.year-1).toString(), formattedMonth)
+        val year = month.year - 1
+        Log.e("select2", "Fetching events for: ${year}-$formattedMonth")
+        financialRepo.getBeforeTotalIncomeExpenditureByYearMonth(year.toString(), formattedMonth)
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+    /*@RequiresApi(Build.VERSION_CODES.O)
     val selectedBeforeMonthTotals: LiveData<TotalIncomeExpenditure> = _selectedBeforeMonth.switchMap { month ->
         if (month.monthValue - 1 == 0) {
             val formattedMonth = String.format("%02d", 12) // Format month as two digits
+            Log.e("select3", "Fetching events for: ${month.year}-$formattedMonth")
             financialRepo.getBeforeTotalIncomeExpenditureByMonth((month.year-1).toString(), formattedMonth)
         } else {
             val formattedMonth = String.format("%02d", month.monthValue-1) // Format month as two digits
+            Log.e("select4", "Fetching events for: ${month.year}-$formattedMonth")
             financialRepo.getBeforeTotalIncomeExpenditureByMonth(month.year.toString(), formattedMonth)
         }
+    }*/
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    val selectedBeforeMonthTotals: LiveData<TotalIncomeExpenditure> = _selectedBeforeMonth.switchMap { month ->
+        val (year, formattedMonth) = if (month.monthValue == 1) {
+            month.year - 1 to String.format("%02d", 12)
+        } else {
+            month.year to String.format("%02d", month.monthValue - 1)
+        }
+        Log.e("select3", "Fetching events for: ${year}-$formattedMonth")
+        financialRepo.getBeforeTotalIncomeExpenditureByMonth(year.toString(), formattedMonth)
     }
 
 

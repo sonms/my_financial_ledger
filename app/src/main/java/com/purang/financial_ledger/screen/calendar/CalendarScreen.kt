@@ -62,10 +62,12 @@ import com.purang.financial_ledger.model.TotalIncomeExpenditure
 import com.purang.financial_ledger.room_db.FinancialEntity
 import com.purang.financial_ledger.room_db.category.CategoryEntity
 import com.purang.financial_ledger.screen.home.MonthDropDownButtonBottomSheet
+import com.purang.financial_ledger.ui.theme.blueD
 import com.purang.financial_ledger.ui.theme.blueExDark
 import com.purang.financial_ledger.ui.theme.blueExLight
 import com.purang.financial_ledger.ui.theme.blueP3
 import com.purang.financial_ledger.ui.theme.blueP5
+import com.purang.financial_ledger.ui.theme.redD
 import com.purang.financial_ledger.ui.theme.redInDark
 import com.purang.financial_ledger.view_model.CategoryViewModel
 import com.purang.financial_ledger.view_model.HomeViewModel
@@ -73,7 +75,9 @@ import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.time.YearMonth
 import java.util.Locale
+import kotlin.math.abs
 
+@OptIn(ExperimentalFoundationApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun CalendarScreen(
@@ -81,15 +85,20 @@ fun CalendarScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     categoryViewModel : CategoryViewModel = hiltViewModel()
 ) {
+    //현재 달
     val monthTotalIncomeExpenditure by viewModel.selectedMonthTotals.observeAsState(
         TotalIncomeExpenditure(0, 0)
     )
 
+    //전년도 같은 월
     val monthBeforeTotalIncomeExpenditure by viewModel.selectedBeforeYearMonthTotals.observeAsState(
-        TotalIncomeExpenditure(0, 0)
+        TotalIncomeExpenditure(null, null)
     )
 
-    val monthBeforeTotalByMonth by viewModel.selectedBeforeMonthTotals.observeAsState(initial = TotalIncomeExpenditure(0, 0))
+    //이전 달
+    val monthBeforeTotalByMonth by viewModel.selectedBeforeMonthTotals.observeAsState(
+        TotalIncomeExpenditure(0, 0)
+    )
 
     val selectFinancialDataByCategoryId by viewModel.getFinancialDataByCategoryId.observeAsState(
         emptyList()
@@ -105,12 +114,23 @@ fun CalendarScreen(
     val yearMonths by viewModel.getDistinctYearMonthsData.observeAsState(emptyList())
     var selectMonth by remember { mutableStateOf(YearMonth.now().toString()) }
 
-    var beforeYearMonthDataCheck by remember {
-        mutableStateOf<Long?>(null)
+    //전년도 같은달 = 현재 600씀 - 전년도 같은월 500씀 = 100원 더씀
+    val beforeYearMonthDataCheck by remember(monthBeforeTotalIncomeExpenditure) {
+        derivedStateOf {
+            // 총 지출 값이 null인 경우 null을 반환
+            monthBeforeTotalIncomeExpenditure.totalExpenditure?.let { expenditure ->
+                monthTotalIncomeExpenditure.totalIncome?.minus(expenditure)
+            }
+        }
     }
 
-    var beforeMonthDataCheck by remember {
-        mutableStateOf<Long?>(null)
+    //이전달과 비교 = 이전달 18원씀 - 현재달 77원씀 = -59원만큼 더씀
+    val beforeMonthDataCheck by remember(monthBeforeTotalByMonth, monthTotalIncomeExpenditure) {
+        derivedStateOf {
+            monthTotalIncomeExpenditure.totalExpenditure?.let { currentExpenditure ->
+                monthBeforeTotalByMonth.totalExpenditure?.minus(currentExpenditure)
+            }
+        }
     }
 
     var selectCategoryId by remember {
@@ -124,18 +144,6 @@ fun CalendarScreen(
 
         //카테고리
         viewModel.fetchCategoryId(selectCategoryId)
-
-        beforeYearMonthDataCheck = monthBeforeTotalIncomeExpenditure.totalExpenditure?.let {
-            monthBeforeTotalIncomeExpenditure.totalIncome?.minus(
-                it
-            )
-        }
-
-        beforeMonthDataCheck = monthBeforeTotalByMonth.totalExpenditure?.let {
-            monthBeforeTotalByMonth.totalIncome?.minus(
-                it
-            )
-        }
     }
 
     LaunchedEffect(selectMonth) {
@@ -151,8 +159,8 @@ fun CalendarScreen(
     
     LaunchedEffect(selectCategoryId) {
         viewModel.fetchCategoryId(selectCategoryId)
-        Log.e("fetchCategoryId", selectFinancialDataByCategoryId.toString())
     }
+
 
     Column (
         modifier = Modifier
@@ -188,42 +196,80 @@ fun CalendarScreen(
             )
         }
 
+        LazyColumn (
+            modifier = Modifier.padding(10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            item {
+                if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
+                    TotalGraph(
+                        modifier = Modifier.padding(bottom = 20.dp),
+                        colors = listOf(redInDark,blueExDark),
+                        data = listOf(
+                            (monthTotalIncomeExpenditure.totalIncome!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat()),
+                            (monthTotalIncomeExpenditure.totalExpenditure!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat())
+                        ),
+                        graphHeight = 120,
+                        onClick = {
+                            isClickGraphInfo = !isClickGraphInfo
+                        }
+                    )
 
+                    if (isClickGraphInfo) {
+                        GraphDetailInfo(
+                            dataExpenditure = monthTotalIncomeExpenditure.totalExpenditure,
+                            dataIncome = monthTotalIncomeExpenditure.totalIncome
+                        )
+                    }
 
-        if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
-            TotalGraph(
-                modifier = Modifier.padding(bottom = 20.dp),
-                colors = listOf(redInDark,blueExDark),
-                data = listOf(
-                    (monthTotalIncomeExpenditure.totalIncome!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat()),
-                    (monthTotalIncomeExpenditure.totalExpenditure!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat())
-                ),
-                graphHeight = 120,
-                onClick = {
-                    isClickGraphInfo = !isClickGraphInfo
+                    GraphInfo(
+                        dataExpenditure = monthTotalIncomeExpenditure.totalExpenditure,
+                        dataIncome = monthTotalIncomeExpenditure.totalIncome
+                    )
+
+                    //전년도 같은 월
+                    CompareBeforeYearMonthTotalAmount(beforeYearMonthDataCheck)
+                    //이전 달
+                    CompareBeforeMonthTotalAmount(beforeMonthDataCheck)
+
+                } else {
+                    Text(text = "해당 월에 데이터가 존재하지 않습니다.")
                 }
-            )
-
-            if (isClickGraphInfo) {
-                GraphDetailInfo(data = monthTotalIncomeExpenditure)
             }
 
-            GraphInfo(monthTotalIncomeExpenditure)
+            /*item {
+                CategoryChartScreen(
+                    selectFinancialDataByCategoryId,
+                    categoryAllData
+                ) {
+                    selectCategoryId = it
+                }
+            }*/
 
-            CompareBeforeYearMonthTotalAmount(beforeYearMonthDataCheck)
+            stickyHeader {
+                CategoryStickyHeader(
+                    categoryData = categoryAllData,
+                    onCategoryClick = {
+                        selectCategoryId = it
+                    }
+                )
+            }
 
-            CompareBeforeMonthTotalAmount(beforeMonthDataCheck)
-
-        } else {
-            Text(text = "해당 월에 데이터가 존재하지 않습니다.")
+            item {
+                if (selectFinancialDataByCategoryId.isNotEmpty()) {
+                    GraphByCategory(selectFinancialDataByCategoryId = selectFinancialDataByCategoryId)
+                } else {
+                    Text(text = "해당 카테고리에 데이터가 존재하지 않습니다.")
+                }
+            }
         }
 
-        CategoryChartScreen(
-            selectFinancialDataByCategoryId,
-            categoryAllData
-        ) {
-            selectCategoryId = it
-        }
+
+
+
+
+
     }
     //
 
@@ -246,20 +292,28 @@ fun CalendarScreen(
 
 @Composable
 fun CompareBeforeYearMonthTotalAmount(beforeYearMonthDataCheck : Long?) {
+
     if (beforeYearMonthDataCheck != null) {
+        val backgroundColor = if ((beforeYearMonthDataCheck.toLong()) >= 0L) {
+            blueD
+        } else {
+            redD
+        }
+
         Column (
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .padding(10.dp)
-                .background(blueP5, RoundedCornerShape(6.dp))
+                .background(backgroundColor, RoundedCornerShape(6.dp))
         ) {
             Text (
                 text = if ((beforeYearMonthDataCheck.toLong()) >= 0L) {
-                    "전년도 같은 달에 비해 ${beforeYearMonthDataCheck}이만큼 덜 썼어요"
+                    "전년도 같은 달에 비해 ${numberFormat(beforeYearMonthDataCheck)}원 만큼 더 썼어요"
                 } else {
-                    "전년도 같은 달에 비해 ${beforeYearMonthDataCheck}이만큼 더 썼어요"
-                }
+                    "전년도 같은 달에 비해 ${numberFormat(beforeYearMonthDataCheck)}원 만큼 덜 썼어요"
+                },
+                modifier = Modifier.padding(10.dp)
             )
         }
     } else {
@@ -278,19 +332,27 @@ fun CompareBeforeYearMonthTotalAmount(beforeYearMonthDataCheck : Long?) {
 @Composable
 fun CompareBeforeMonthTotalAmount(beforeMonthDataCheck : Long?) {
     if (beforeMonthDataCheck != null) {
+        val backgroundColor = if ((beforeMonthDataCheck.toLong()) >= 0L) {
+            redD
+        } else {
+            blueD
+        }
+
         Column (
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .padding(10.dp)
-                .background(blueP5, RoundedCornerShape(6.dp))
+                .background(backgroundColor, RoundedCornerShape(6.dp))
         ) {
+            //-59원만큼 더씀
             Text (
                 text = if ((beforeMonthDataCheck.toLong()) >= 0L) {
-                    "이전 달에 비해 ${beforeMonthDataCheck}이만큼 덜 썼어요"
+                    "이전 달에 비해 ${numberFormat(abs(beforeMonthDataCheck))}원 만큼 덜 썼어요"
                 } else {
-                    "이전 달에 비해 ${beforeMonthDataCheck}이만큼 더 썼어요"
-                }
+                    "이전 달에 비해 ${numberFormat(abs(beforeMonthDataCheck))}원 만큼 더 썼어요"
+                },
+                modifier = Modifier.padding(10.dp)
             )
         }
     } else {
@@ -313,11 +375,12 @@ fun numberFormat(amount: Long?): String {
 
 @Composable
 fun GraphDetailInfo(
-    data : TotalIncomeExpenditure
+    dataExpenditure : Long?,
+    dataIncome : Long?
 ) {
     Row {
         Text(
-            text = "수입 ${numberFormat(data.totalIncome)}원",
+            text = "수입 ${numberFormat(dataIncome)}원",
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSecondary
         )
@@ -325,7 +388,7 @@ fun GraphDetailInfo(
         Spacer(modifier = Modifier.width(20.dp))
 
         Text(
-            text = "지출  ${numberFormat(data.totalExpenditure)}원",
+            text = "지출  ${numberFormat(dataExpenditure)}원",
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.secondary
         )
@@ -428,7 +491,8 @@ private fun DrawScope.drawGraph(
 
 @Composable
 fun GraphInfo(
-    total : TotalIncomeExpenditure,
+    dataExpenditure : Long?,
+    dataIncome : Long?
 ) {
     val incomeColor = MaterialTheme.colorScheme.onSecondary
     val expenditureColor = MaterialTheme.colorScheme.secondary
@@ -441,7 +505,7 @@ fun GraphInfo(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (total.totalIncome != 0L) {
+        if (dataIncome != null && dataExpenditure != null) {
             Row (
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -465,7 +529,7 @@ fun GraphInfo(
 
         Spacer(modifier = Modifier.width(20.dp))
 
-        if (total.totalExpenditure != 0L) {
+        if (dataIncome != null && dataExpenditure != null) {
             Row (
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -489,6 +553,7 @@ fun GraphInfo(
     }
 }
 
+/*
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun CategoryChartScreen(
@@ -496,10 +561,8 @@ fun CategoryChartScreen(
     categoryData : List<CategoryEntity>,
     onCategoryClick: (Long?) -> Unit
 ) {
-    LazyColumn(
-        modifier = Modifier.padding(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    LazyColumn (
+
     ) {
         stickyHeader {
             CategoryStickyHeader(
@@ -510,12 +573,6 @@ fun CategoryChartScreen(
             )
         }
 
-        //전체 차트를 init으로 설정 <-> 카테고리 선택 시 변경하도록
-        /*items(
-            selectFinancialDataByCategoryId
-        ) {
-
-        }*/
         item {
             if (selectFinancialDataByCategoryId?.isNotEmpty() == true) {
                 GraphByCategory(selectFinancialDataByCategoryId = selectFinancialDataByCategoryId)
@@ -523,8 +580,17 @@ fun CategoryChartScreen(
                 Text(text = "해당 카테고리에 데이터가 존재하지 않습니다.")
             }
         }
+        //전체 차트를 init으로 설정 <-> 카테고리 선택 시 변경하도록
+        */
+/*items(
+            selectFinancialDataByCategoryId
+        ) {
+
+        }*//*
+
     }
 }
+*/
 
 @Composable
 fun GraphByCategory(
@@ -536,10 +602,6 @@ fun GraphByCategory(
 
     val categoryTotalExpenditure by derivedStateOf {
         selectFinancialDataByCategoryId.sumOf { it.expenditure ?: 0L }
-    }
-
-    val categoryTotalIncomeExpenditure by remember {
-        mutableStateOf(TotalIncomeExpenditure(categoryTotalIncome, categoryTotalExpenditure))
     }
 
     var isClickGraphInfo by remember {
@@ -561,10 +623,16 @@ fun GraphByCategory(
         )
 
         if (isClickGraphInfo) {
-            GraphDetailInfo(data = categoryTotalIncomeExpenditure)
+            GraphDetailInfo(
+                dataExpenditure = categoryTotalExpenditure,
+                dataIncome = categoryTotalIncome
+            )
         }
 
-        GraphInfo(categoryTotalIncomeExpenditure)
+        GraphInfo(
+            dataExpenditure = categoryTotalExpenditure,
+            dataIncome = categoryTotalIncome
+        )
 
     } else {
         Text(text = "해당 카테고리에 데이터가 존재하지 않습니다.")
