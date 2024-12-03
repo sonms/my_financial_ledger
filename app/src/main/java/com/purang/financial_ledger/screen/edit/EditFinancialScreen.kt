@@ -28,6 +28,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -79,6 +80,8 @@ import com.purang.financial_ledger.ui.theme.blueP2
 import com.purang.financial_ledger.ui.theme.blueP3
 import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.blueP6
+import com.purang.financial_ledger.ui.theme.blueP7
+import com.purang.financial_ledger.ui.theme.pink7
 import com.purang.financial_ledger.ui.theme.redInDark
 import com.purang.financial_ledger.view_model.CategoryViewModel
 import com.purang.financial_ledger.view_model.HomeViewModel
@@ -220,7 +223,10 @@ fun EditFinancialScreen(
                                     .background(blueP3, RoundedCornerShape(8.dp))
                                     .wrapContentSize()
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = "AddCategory")
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = "AddCategory",
+                                )
                             }
                         }
                     }
@@ -717,32 +723,38 @@ fun EditCategoryItem(
     onLongClick : (CategoryEntity) -> Unit
 ) {
     // 클릭 상태를 추적할 mutable state
-    val isClicked = remember { mutableStateOf(false) }
+    var isClicked by remember { mutableStateOf(false) }
 
     // 클릭 시 상태 변경
-    val backgroundColor = if (isClicked.value) blueP3 else blueP6
+    val backgroundColor = if (isClicked) blueP7 else pink7
 
-    Column (
+
+    Row(
         modifier = Modifier
             .padding(5.dp)
             .background(backgroundColor, RoundedCornerShape(8.dp))
             .wrapContentSize()
             .combinedClickable(
                 onClick = {
-                    isClicked.value = !isClicked.value // 클릭 시 상태 반전
+                    isClicked = !isClicked // 클릭 시 상태 반전
                     onClick(item) // 클릭된 아이템을 전달
                 },
                 onLongClick = {
                     onLongClick(item)
                 },
-            )
+            ),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            modifier = Modifier.padding(5.dp),
+            modifier = if (isClicked) Modifier.padding(start = 10.dp, bottom = 10.dp, top = 10.dp) else Modifier.padding(10.dp),
             text = item.categoryName,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold
         )
+
+        if (isClicked) {
+            Icon(Icons.Default.Done, contentDescription = "clickCategory", tint = Color.White, modifier = Modifier.padding(start = 5.dp, end = 10.dp))
+        }
     }
 }
 

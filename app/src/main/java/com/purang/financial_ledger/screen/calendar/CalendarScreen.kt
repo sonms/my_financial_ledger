@@ -32,6 +32,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -66,7 +67,12 @@ import com.purang.financial_ledger.ui.theme.blueD
 import com.purang.financial_ledger.ui.theme.blueExDark
 import com.purang.financial_ledger.ui.theme.blueExLight
 import com.purang.financial_ledger.ui.theme.blueP3
+import com.purang.financial_ledger.ui.theme.blueP4
 import com.purang.financial_ledger.ui.theme.blueP5
+import com.purang.financial_ledger.ui.theme.blueP7
+import com.purang.financial_ledger.ui.theme.pink3
+import com.purang.financial_ledger.ui.theme.pink4
+import com.purang.financial_ledger.ui.theme.pink7
 import com.purang.financial_ledger.ui.theme.redD
 import com.purang.financial_ledger.ui.theme.redInDark
 import com.purang.financial_ledger.view_model.CategoryViewModel
@@ -683,24 +689,29 @@ fun CategoryItem(
     isSelected: Boolean,
     onItemSelected: (Long) -> Unit
 ) {
-    Column(
+    Row(
         modifier = Modifier
             .wrapContentSize()
             .padding(5.dp)
             .background(
-                if (isSelected) blueP3 else blueExLight,
+                if (isSelected) blueP7 else pink7,
                 RoundedCornerShape(8.dp)
             )
             .clickable {
                 onItemSelected(item.id) // 선택된 ID를 부모에게 전달
-            }
+            },
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = item.categoryName,
             fontWeight = FontWeight.SemiBold,
             fontSize = 12.sp,
-            modifier = Modifier.padding(10.dp)
+            modifier = if (isSelected) Modifier.padding(start = 10.dp, bottom = 10.dp, top = 10.dp) else Modifier.padding(10.dp)
         )
+
+        if (isSelected) {
+            Icon(Icons.Default.Done, contentDescription = "clickCategory", tint = Color.White, modifier = Modifier.padding(start = 5.dp, end = 10.dp))
+        }
     }
 }
 /*
