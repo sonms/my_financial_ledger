@@ -43,6 +43,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.what2c.preferences_data_store.PreferencesDataStore
 import com.purang.financial_ledger.screen.calendar.CalendarScreen
+import com.purang.financial_ledger.screen.chart.ChartScreen
 import com.purang.financial_ledger.screen.edit.EditFinancialScreen
 import com.purang.financial_ledger.screen.home.HomeScreen
 import com.purang.financial_ledger.screen.search.SearchScreen
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
     sealed class BottomNavItem(
         val title: Int, val icon: Int, val screenRoute: String
     ) {
+        data object Chart : BottomNavItem(R.string.text_chart, R.drawable.baseline_pie_chart_24, "chart")
         data object Calendar : BottomNavItem(R.string.text_calendar, R.drawable.baseline_calendar_month_24, "calendar")
         data object Home : BottomNavItem(R.string.text_home, R.drawable.baseline_home_24, "home")
         data object Settings : BottomNavItem(R.string.text_settings, R.drawable.baseline_settings_24, "settings")
@@ -81,8 +83,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        val homeViewModel: HomeViewModel = hiltViewModel()
-                        MainContent(homeViewModel) // Include the MainContent directly
+                        MainContent() // Include the MainContent directly
                     }
                 }
             }
@@ -92,7 +93,7 @@ class MainActivity : ComponentActivity() {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun MainContent(homeViewModel: HomeViewModel) {
+fun MainContent() {
     val navController = rememberNavController()
     // 현재 라우트를 가져옵니다.
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -100,8 +101,8 @@ fun MainContent(homeViewModel: HomeViewModel) {
     Scaffold(
         floatingActionButtonPosition = FabPosition.End,
         floatingActionButton = {
-            // 특정 라우트에서는 BottomNavigation을 숨깁니다.
-            if (currentRoute == MainActivity.BottomNavItem.Home.screenRoute || currentRoute == MainActivity.BottomNavItem.Calendar.screenRoute) {
+            // 특정 라우트에서는 FloatingActionButton 숨깁니다.
+            if (currentRoute == MainActivity.BottomNavItem.Home.screenRoute || currentRoute == MainActivity.BottomNavItem.Chart.screenRoute) {
                 FloatingActionButton(
                     onClick = {
                         navController.navigate("edit_financial")
@@ -124,7 +125,7 @@ fun MainContent(homeViewModel: HomeViewModel) {
         },
     ) {
         Box(Modifier.padding(it)) {
-            NavigationGraph(navController = navController, homeViewModel)
+            NavigationGraph(navController = navController)
         }
     }
 }
@@ -134,6 +135,7 @@ fun BottomNavigation(navController: NavController) {
     val items = listOf(
         MainActivity.BottomNavItem.Home,
         MainActivity.BottomNavItem.Calendar,
+        MainActivity.BottomNavItem.Chart,
         MainActivity.BottomNavItem.Settings,
     )
 
@@ -182,16 +184,13 @@ fun BottomNavigation(navController: NavController) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NavigationGraph(navController: NavHostController, homeViewModel: HomeViewModel) {
+fun NavigationGraph(navController: NavHostController) {
     NavHost(navController = navController, startDestination = MainActivity.BottomNavItem.Home.screenRoute) {
+        composable(MainActivity.BottomNavItem.Chart.screenRoute) {
+            ChartScreen()
+        }
         composable(MainActivity.BottomNavItem.Calendar.screenRoute) {
-            CalendarScreen(
-                /*onSelectedDate = { selectedDate ->
-                    // 선택된 날짜를 처리하는 코드 작성
-                    Log.d("CalendarScreen", "Selected date: $selectedDate")
-                    homeViewModel.fetchEventsByDate(selectedDate.toString())
-                }*/
-            )
+            CalendarScreen(navController)
         }
         composable(MainActivity.BottomNavItem.Home.screenRoute) {
             HomeScreen(navController)

@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.purang.financial_ledger.room_db.FinancialEntity
-import com.purang.financial_ledger.screen.calendar.numberFormat
 import com.purang.financial_ledger.screen.home.DeleteItemDialog
 import com.purang.financial_ledger.screen.home.HomeFinancialItem
 import com.purang.financial_ledger.ui.theme.blueP3

@@ -89,7 +89,7 @@ import com.purang.financial_ledger.R
 import com.purang.financial_ledger.model.TotalIncomeExpenditure
 import com.purang.financial_ledger.room_db.FinancialEntity
 import com.purang.financial_ledger.room_db.category.CategoryEntity
-import com.purang.financial_ledger.screen.calendar.numberFormat
+import com.purang.financial_ledger.screen.chart.numberFormat
 import com.purang.financial_ledger.ui.theme.Financial_LedgerTheme
 import com.purang.financial_ledger.ui.theme.blueD
 import com.purang.financial_ledger.ui.theme.blueExDark

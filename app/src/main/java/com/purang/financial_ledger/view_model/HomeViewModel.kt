@@ -31,29 +31,19 @@ class HomeViewModel @Inject constructor(
     val getDistinctYearMonthsData : LiveData<List<String>> = financialRepo.getDistinctYearMonths()
 
 
-
-    // 현재 선택된 날짜를 저장하는 LiveData
-    private val _selectedDate = MutableLiveData<String>()
-    val selectedDate: LiveData<String> get() = _selectedDate
-
-    // _selectedDate가 변경될 때마다 자동으로 업데이트되는 calendarTodoList
-    val calendarFinancialList: LiveData<List<FinancialEntity>> = _selectedDate.switchMap { date ->
-        financialRepo.getEventsByDate(date)
-    }
-
     // LiveData to track the selected month
     private val _selectedMonth = MutableLiveData<YearMonth>()
     private val _selectedBeforeYearMonth = MutableLiveData<YearMonth>()
     private val _selectedBeforeMonth = MutableLiveData<YearMonth>()
     private val _categoryId = MutableLiveData<Long?>()
+    private val _clickCalendar = MutableLiveData<String>()
 
-    // LiveData that fetches events for the selected month
-    /*@RequiresApi(Build.VERSION_CODES.O)
-    val selectedMonthEvents: LiveData<List<FinancialEntity>> = _selectedMonth.switchMap { month ->
-        val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
-        Log.e("SelectedMonth", "Fetching events for: ${month.year}-$formattedMonth")
-        financialRepo.getEventsByMonth(month.year.toString(), formattedMonth)
-    }*/
+
+    val clickCalendarData : LiveData<List<FinancialEntity>> = _clickCalendar.switchMap {date ->
+        financialRepo.getClickCalendarData(date, date)
+    }
+
+
     @RequiresApi(Build.VERSION_CODES.O)
     val selectedMonthEventsWithCategory: LiveData<List<FinancialEntity>> =
         _selectedMonth.switchMap { month ->
@@ -105,6 +95,10 @@ class HomeViewModel @Inject constructor(
 
     fun fetchCategoryId(categoryId: Long?) {
         _categoryId.value = categoryId
+    }
+
+    fun fetchCalendarDate(date : String) {
+        _clickCalendar.value = date
     }
 
     //카테고리 id로 데이터 가져오기

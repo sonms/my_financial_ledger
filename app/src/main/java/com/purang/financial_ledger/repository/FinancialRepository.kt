@@ -22,6 +22,10 @@ class FinancialRepository @Inject constructor(private val financialDao: Financia
         return financialDao.getEventsByMonthAndCategory(year, month, categoryId)
     }
 
+    fun getClickCalendarData(startDate : String, endDate : String) : LiveData<List<FinancialEntity>> {
+        return financialDao.getClickCalendarEvents(startDate, endDate)
+    }
+
     fun getTotalIncomeExpenditure(year: String, month: String): LiveData<TotalIncomeExpenditure> {
         return financialDao.getTotalIncomeExpenditureByMonth(year, month)
     }

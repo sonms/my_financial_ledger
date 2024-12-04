@@ -72,9 +72,6 @@ import com.purang.financial_ledger.MainActivity
 import com.purang.financial_ledger.R
 import com.purang.financial_ledger.loading.DialogState
 import com.purang.financial_ledger.room_db.category.CategoryEntity
-import com.purang.financial_ledger.screen.calendar.numberFormat
-import com.purang.financial_ledger.ui.theme.Pink80
-import com.purang.financial_ledger.ui.theme.Purple80
 import com.purang.financial_ledger.ui.theme.blueExDark
 import com.purang.financial_ledger.ui.theme.blueP2
 import com.purang.financial_ledger.ui.theme.blueP3

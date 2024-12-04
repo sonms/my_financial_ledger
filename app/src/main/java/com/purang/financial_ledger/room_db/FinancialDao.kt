@@ -18,6 +18,16 @@ interface FinancialDao {
     @Query("SELECT * FROM FinancialTable WHERE strftime('%Y', date) = :year AND strftime('%m', date) = :month ORDER BY date DESC")
     fun getEventsByMonth(year: String, month: String): LiveData<List<FinancialEntity>>
 
+    /*@Query("SELECT * FROM FinancialTable WHERE strftime('%Y', date) = :year AND strftime('%m', date) = :month AND strftime('%d', date) = :date ORDER BY date DESC")
+    fun getClickCalendarEvents(year: String, month: String, date: String): LiveData<List<FinancialEntity>>*/
+    @Query("""
+    SELECT * 
+    FROM FinancialTable 
+    WHERE date BETWEEN :startDate AND :endDate
+    ORDER BY date DESC
+""")
+    fun getClickCalendarEvents(startDate: String, endDate: String): LiveData<List<FinancialEntity>>
+
     @Query("SELECT * FROM FinancialTable WHERE id = :id")
     suspend fun getEventsById(id: Long?): FinancialEntity?
 
