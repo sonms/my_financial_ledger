@@ -47,6 +47,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -75,6 +76,7 @@ import com.purang.financial_ledger.room_db.category.CategoryEntity
 import com.purang.financial_ledger.ui.theme.blueExDark
 import com.purang.financial_ledger.ui.theme.blueP2
 import com.purang.financial_ledger.ui.theme.blueP3
+import com.purang.financial_ledger.ui.theme.blueP4
 import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.ui.theme.blueP7
@@ -100,12 +102,11 @@ fun EditFinancialScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     categoryViewModel: CategoryViewModel = hiltViewModel()
 ) {
-    Log.e("Edit", "$type $id")
     val financialItem by viewModel.selectedFinancialItem.collectAsState()
+
     if (id != null) {
         LaunchedEffect(id) {
             viewModel.setSelectedId(id.toLongOrNull())
-            Log.e("launchedItemByid",financialItem.toString())
         }
     }
 
@@ -113,7 +114,20 @@ fun EditFinancialScreen(
     // ViewModel에서 데이터 관찰
 
     var isShowingCategoryDialog by remember { mutableStateOf(false) }
-    var selectedCategory by remember { mutableStateOf<CategoryEntity?>(null) }
+
+    val selectedCategory by remember(categoryDataList, financialItem) {
+        derivedStateOf {
+            financialItem?.categoryId?.let { id ->
+                categoryDataList.find { it.id == id }
+            }
+        }
+    }
+    Log.e("selectedCategory", selectedCategory.toString())
+
+    var selectCategory by remember {
+        mutableStateOf<CategoryEntity?>(null)
+    }
+
     var selectedDate by remember { mutableStateOf(YearMonth.now().toString()) }
 
     var textTitle by remember {
@@ -131,17 +145,18 @@ fun EditFinancialScreen(
     }
 
     if (type != "default") {
-        LaunchedEffect(financialItem) {
+        LaunchedEffect(financialItem, categoryDataList) {
             // categoryViewModel에서 categoryId로 카테고리 데이터 가져오기
             categoryViewModel.getCategoryItemById(financialItem?.categoryId)
 
             // 상태값 설정
             textTitle = financialItem?.title ?: ""
             textContent = financialItem?.content ?: ""
-            selectedCategory = categoryDataList.find { it.id == financialItem?.categoryId }
+            //selectedCategory = categoryDataList.find { it.id == financialItem?.categoryId }
             editIncome = financialItem?.income.toString()
             editExpenditure = financialItem?.expenditure.toString()
             selectedDate = financialItem?.date.toString()
+
         }
     }
 
@@ -209,7 +224,9 @@ fun EditFinancialScreen(
                 LazyRow (
                     horizontalArrangement = Arrangement.Start, // 전체 LazyRow의 아이템을 중앙 정렬
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().padding(10.dp) // LazyRow가 전체 너비를 차지하도록 설정
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp) // LazyRow가 전체 너비를 차지하도록 설정
                 ) {
                     item {
                        
@@ -217,7 +234,7 @@ fun EditFinancialScreen(
                             Column(
                                 modifier = Modifier
                                     .padding(5.dp)
-                                    .background(blueP3, RoundedCornerShape(8.dp))
+                                    .background(blueP4, RoundedCornerShape(8.dp))
                                     .wrapContentSize()
                             ) {
                                 Icon(
@@ -233,15 +250,13 @@ fun EditFinancialScreen(
                     ) { _, item ->
                         EditCategoryItem(
                             item,
+                            isSelected = selectedCategory?.id == item.id, // 선택된 카테고리와 비교
                             onClick = {
                                 // 클릭 시 선택된 카테고리 설정
-                                selectedCategory = item
-                                //createFinancialData?.categoryId = item.id
-                                Log.e("Selected Category", item.toString())
+                                selectCategory = item
                             },
                             onLongClick = {
                                 // 길게 클릭 시 카테고리 수정, 삭제 등 다른 동작을 추가 가능
-                                Log.e("Long Click", "Category ${item.categoryName} long clicked")
                                 categoryViewModel.deleteCategory(it)
                             }
                         )
@@ -289,7 +304,7 @@ fun EditFinancialScreen(
                             //추가
                             if (type == "default") {
                                 viewModel.addFinancialData(
-                                    categoryId = selectedCategory?.id,
+                                    categoryId = selectCategory?.id,
                                     title = textTitle,
                                     content = textContent,
                                     date = selectedDate,
@@ -306,10 +321,9 @@ fun EditFinancialScreen(
                                 )
                             } else {
                                 //수정
-                                Log.e("editFinancialData", "수정")
                                 viewModel.updateFinancialData(
                                     id = financialItem?.id!!,
-                                    categoryId = selectedCategory?.id,
+                                    categoryId = selectCategory?.id,
                                     title = textTitle,
                                     content = textContent,
                                     date = selectedDate,
@@ -489,7 +503,7 @@ fun EditCalendar(
         )*/
         Row(
             modifier = Modifier
-                .background(blueP3, RoundedCornerShape(8.dp))
+                .background(blueP4, RoundedCornerShape(8.dp))
                 .fillMaxWidth()
                 .wrapContentHeight(),
         ) {
@@ -715,16 +729,13 @@ fun EditCategoryCreateDialog(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun EditCategoryItem(
-    item : CategoryEntity,
-    onClick : (CategoryEntity) -> Unit,
-    onLongClick : (CategoryEntity) -> Unit
+    item: CategoryEntity,
+    isSelected: Boolean, // 선택 여부를 외부에서 관리
+    onClick: (CategoryEntity) -> Unit,
+    onLongClick: (CategoryEntity) -> Unit
 ) {
-    // 클릭 상태를 추적할 mutable state
-    var isClicked by remember { mutableStateOf(false) }
-
-    // 클릭 시 상태 변경
-    val backgroundColor = if (isClicked) blueP7 else pink7
-
+    // 선택 상태에 따라 배경색 결정
+    val backgroundColor = if (isSelected) blueP7 else pink7
 
     Row(
         modifier = Modifier
@@ -733,8 +744,7 @@ fun EditCategoryItem(
             .wrapContentSize()
             .combinedClickable(
                 onClick = {
-                    isClicked = !isClicked // 클릭 시 상태 반전
-                    onClick(item) // 클릭된 아이템을 전달
+                    onClick(item) // 클릭된 아이템을 외부로 전달
                 },
                 onLongClick = {
                     onLongClick(item)
@@ -743,14 +753,14 @@ fun EditCategoryItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            modifier = if (isClicked) Modifier.padding(start = 10.dp, bottom = 10.dp, top = 10.dp) else Modifier.padding(10.dp),
+            modifier = if (isSelected) Modifier.padding(start = 10.dp, bottom = 10.dp, top = 10.dp) else Modifier.padding(10.dp),
             text = item.categoryName,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold
         )
 
-        if (isClicked) {
-            Icon(Icons.Default.Done, contentDescription = "clickCategory", tint = Color.White, modifier = Modifier.padding(start = 5.dp, end = 10.dp))
+        if (isSelected) {
+            Icon(Icons.Default.Done, contentDescription = "SelectedCategory", tint = Color.White, modifier = Modifier.padding(start = 5.dp, end = 10.dp))
         }
     }
 }

@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.purang.financial_ledger.loading.LoadingState
 import com.purang.financial_ledger.room_db.FinancialEntity
 import com.purang.financial_ledger.screen.chart.numberFormat
 import com.purang.financial_ledger.screen.home.DeleteItemDialog
@@ -152,6 +153,7 @@ fun CalendarScreen(
         val yearMonth = YearMonth.parse(pageChangeDate)
         homeViewModel.fetchEventsByMonth(yearMonth)
         homeViewModel.fetchCategoryId(selectCategoryId)
+        LoadingState.hide()
     }
 
     val listState = rememberLazyListState()
@@ -213,6 +215,7 @@ fun CalendarScreen(
                             }
                         },
                         onPageChanged = {
+                            LoadingState.show()
                             val formattedMonth = String.format("%02d", it.month)
                             pageChangeDate = "${it.year}-${formattedMonth}"
                         }
