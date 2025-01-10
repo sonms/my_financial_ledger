@@ -42,6 +42,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.what2c.preferences_data_store.PreferencesDataStore
+import com.purang.financial_ledger.loading.GlobalLoadingScreen
 import com.purang.financial_ledger.screen.calendar.CalendarScreen
 import com.purang.financial_ledger.screen.chart.ChartScreen
 import com.purang.financial_ledger.screen.edit.EditFinancialScreen
@@ -83,6 +84,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
+                        GlobalLoadingScreen()
                         MainContent() // Include the MainContent directly
                     }
                 }
