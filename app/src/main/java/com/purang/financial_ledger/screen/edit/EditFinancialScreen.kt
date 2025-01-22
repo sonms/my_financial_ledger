@@ -103,6 +103,7 @@ fun EditFinancialScreen(
     categoryViewModel: CategoryViewModel = hiltViewModel()
 ) {
     val financialItem by viewModel.selectedFinancialItem.collectAsState()
+    val movedDateData by viewModel.dateMoveData.collectAsState()
 
     if (id != null) {
         LaunchedEffect(id) {
@@ -115,20 +116,34 @@ fun EditFinancialScreen(
 
     var isShowingCategoryDialog by remember { mutableStateOf(false) }
 
-    val selectedCategory by remember(categoryDataList, financialItem) {
+    /*val selectedCategory by remember(categoryDataList, financialItem) {
         derivedStateOf {
             financialItem?.categoryId?.let { id ->
                 categoryDataList.find { it.id == id }
             }
         }
-    }
-    Log.e("selectedCategory", selectedCategory.toString())
-
+    }*/
     var selectCategory by remember {
         mutableStateOf<CategoryEntity?>(null)
     }
 
-    var selectedDate by remember { mutableStateOf(YearMonth.now().toString()) }
+    val selectedCategory = selectCategory ?: financialItem?.categoryId?.let { categoryId ->
+        categoryDataList.find { it.id == categoryId }
+    }
+
+
+
+    var selectedDate by remember {
+        mutableStateOf("")
+    }
+
+    LaunchedEffect(movedDateData) {
+        selectedDate = if (movedDateData.isNullOrEmpty()) {
+            YearMonth.now().toString()
+        } else {
+            movedDateData.toString()
+        }
+    }
 
     var textTitle by remember {
         mutableStateOf("")
@@ -156,7 +171,6 @@ fun EditFinancialScreen(
             editIncome = financialItem?.income.toString()
             editExpenditure = financialItem?.expenditure.toString()
             selectedDate = financialItem?.date.toString()
-
         }
     }
 
@@ -202,7 +216,6 @@ fun EditFinancialScreen(
                     textTitle = textTitle,
                     onTextChange = { newText ->
                         textTitle = newText
-                        Log.e("editTest", textTitle)
                     }
                 )
             }
@@ -212,8 +225,6 @@ fun EditFinancialScreen(
                     textContent = textContent,
                     onTextChange = { newText ->
                         textContent = newText
-                        //createFinancialData?.content = textContent
-                        Log.e("editTest", textContent)
                     }
                 )
             }
@@ -253,7 +264,11 @@ fun EditFinancialScreen(
                             isSelected = selectedCategory?.id == item.id, // 선택된 카테고리와 비교
                             onClick = {
                                 // 클릭 시 선택된 카테고리 설정
-                                selectCategory = item
+                                selectCategory = if (selectCategory?.id != item.id) {
+                                    item
+                                } else {
+                                    null
+                                }
                             },
                             onLongClick = {
                                 // 길게 클릭 시 카테고리 수정, 삭제 등 다른 동작을 추가 가능
@@ -381,13 +396,6 @@ fun EditTitle(
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        Text(
-            modifier = Modifier.padding(10.dp),
-            text = "제목",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-        )
-
         OutlinedTextField(
             value = textTitle,
             onValueChange = {
@@ -409,7 +417,15 @@ fun EditTitle(
                 .padding(bottom = 10.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = blueP3
-            )
+            ),
+            label = {
+                Text (
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    text = "제목",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp
+                )
+            }
         )
 
         /*Spacer(
@@ -433,13 +449,6 @@ fun EditContent(
             .fillMaxWidth()
         
     ) {
-        Text(
-            modifier = Modifier.padding(10.dp),
-            text = "내용",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-        )
-
         OutlinedTextField(
             value = textContent,
             onValueChange = onTextChange,
@@ -454,7 +463,15 @@ fun EditContent(
                 .padding(bottom = 10.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = blueP3
-            )
+            ),
+            label = {
+                Text(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    text = "내용",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                )
+            }
         )
 
         /*Spacer(

@@ -254,12 +254,14 @@ fun ChartScreen(
             }*/
 
             stickyHeader {
-                CategoryStickyHeader(
-                    categoryData = categoryAllData,
-                    onCategoryClick = {
-                        selectCategoryId = it
-                    }
-                )
+                if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
+                    CategoryStickyHeader(
+                        categoryData = categoryAllData,
+                        onCategoryClick = {
+                            selectCategoryId = it
+                        }
+                    )
+                }
             }
 
             item {
@@ -660,7 +662,8 @@ fun CategoryStickyHeader(
             text = "카테고리",
             modifier = Modifier
                 .align(Alignment.CenterVertically)
-                .padding(end = 10.dp)
+                .padding(end = 10.dp, start = 10.dp),
+            fontWeight = FontWeight.Bold
         )
 
         LazyRow {

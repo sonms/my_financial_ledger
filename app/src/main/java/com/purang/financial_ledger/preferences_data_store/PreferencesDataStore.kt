@@ -1,4 +1,4 @@
-package com.example.what2c.preferences_data_store
+package com.purang.financial_ledger.preferences_data_store
 
 import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey

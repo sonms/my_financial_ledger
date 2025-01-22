@@ -32,7 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.what2c.preferences_data_store.PreferencesDataStore
+import com.purang.financial_ledger.preferences_data_store.PreferencesDataStore
 import kotlinx.coroutines.launch
 
 @Composable

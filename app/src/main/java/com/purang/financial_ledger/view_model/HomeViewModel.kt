@@ -16,6 +16,7 @@ import com.purang.financial_ledger.room_db.FinancialEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.YearMonth
 import javax.inject.Inject
@@ -37,6 +38,19 @@ class HomeViewModel @Inject constructor(
     private val _selectedBeforeMonth = MutableLiveData<YearMonth>()
     private val _categoryId = MutableLiveData<Long?>()
     private val _clickCalendar = MutableLiveData<String>()
+
+    //약 데이터 이동 관찰용
+    private val _dateMoveData = MutableStateFlow<String?>(null)
+
+    // 외부에서 읽기 전용 StateFlow로 노출
+    val dateMoveData: StateFlow<String?> = _dateMoveData.asStateFlow()
+
+    // 데이터 갱신 함수
+    fun updateMoveData(data: String) {
+        viewModelScope.launch {
+            _dateMoveData.value = data
+        }
+    }
 
 
     val clickCalendarData : LiveData<List<FinancialEntity>> = _clickCalendar.switchMap {date ->

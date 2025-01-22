@@ -23,25 +23,22 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.what2c.preferences_data_store.PreferencesDataStore
+import com.purang.financial_ledger.preferences_data_store.PreferencesDataStore
 import com.purang.financial_ledger.loading.GlobalLoadingScreen
 import com.purang.financial_ledger.screen.calendar.CalendarScreen
 import com.purang.financial_ledger.screen.chart.ChartScreen
@@ -54,7 +51,6 @@ import com.purang.financial_ledger.ui.theme.blueP4
 import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.view_model.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import java.time.LocalDate
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -104,7 +100,7 @@ fun MainContent() {
         floatingActionButtonPosition = FabPosition.End,
         floatingActionButton = {
             // 특정 라우트에서는 FloatingActionButton 숨깁니다.
-            if (currentRoute == MainActivity.BottomNavItem.Home.screenRoute || currentRoute == MainActivity.BottomNavItem.Chart.screenRoute) {
+            if (currentRoute == MainActivity.BottomNavItem.Home.screenRoute || currentRoute == MainActivity.BottomNavItem.Calendar.screenRoute) {
                 FloatingActionButton(
                     onClick = {
                         navController.navigate("edit_financial")
@@ -186,13 +182,13 @@ fun BottomNavigation(navController: NavController) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NavigationGraph(navController: NavHostController) {
+fun NavigationGraph(navController: NavHostController, homeViewModel: HomeViewModel = hiltViewModel()) {
     NavHost(navController = navController, startDestination = MainActivity.BottomNavItem.Home.screenRoute) {
         composable(MainActivity.BottomNavItem.Chart.screenRoute) {
             ChartScreen()
         }
         composable(MainActivity.BottomNavItem.Calendar.screenRoute) {
-            CalendarScreen(navController)
+            CalendarScreen(navController, homeViewModel)
         }
         composable(MainActivity.BottomNavItem.Home.screenRoute) {
             HomeScreen(navController)
@@ -212,7 +208,7 @@ fun NavigationGraph(navController: NavHostController) {
             val type = backStackEntry.arguments?.getString("type") ?: "default"
             val id = backStackEntry.arguments?.getString("id") ?: "-1"
 
-            EditFinancialScreen(navController, type = type, id = id)
+            EditFinancialScreen(navController, type = type, id = id, homeViewModel)
         }
 
         composable(

@@ -55,6 +55,8 @@ import com.uuranus.schedule.calendar.compose.ScheduleCalendarDefaults
 import com.uuranus.schedule.calendar.compose.ScheduleData
 import com.uuranus.schedule.calendar.compose.ScheduleDate
 import com.uuranus.schedule.calendar.compose.ScheduleInfo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.YearMonth
 
@@ -147,6 +149,7 @@ fun CalendarScreen(
 
     LaunchedEffect(selectDate) {
         homeViewModel.fetchCalendarDate(selectDate)
+        homeViewModel.updateMoveData(selectDate)
     }
 
     LaunchedEffect(pageChangeDate) {
@@ -215,9 +218,15 @@ fun CalendarScreen(
                             }
                         },
                         onPageChanged = {
-                            LoadingState.show()
-                            val formattedMonth = String.format("%02d", it.month)
-                            pageChangeDate = "${it.year}-${formattedMonth}"
+                            CoroutineScope(Dispatchers.IO).launch {
+                                LoadingState.show()
+                                try {
+                                    val formattedMonth = String.format("%02d", it.month)
+                                    pageChangeDate = "${it.year}-${formattedMonth}"
+                                } finally {
+                                    LoadingState.hide()
+                                }
+                            }
                         }
                     )
                 }
