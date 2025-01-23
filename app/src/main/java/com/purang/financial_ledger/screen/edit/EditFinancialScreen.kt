@@ -298,11 +298,9 @@ fun EditFinancialScreen(
 
                     incomeOnTextChanged = {newText ->
                         editIncome = newText
-                        Log.e("editTest", editIncome)
                     },
                     expenditureOnTextChanged = {newText ->
                         editExpenditure = newText
-                        Log.e("editTest", editExpenditure)
                     }
                 )
             }

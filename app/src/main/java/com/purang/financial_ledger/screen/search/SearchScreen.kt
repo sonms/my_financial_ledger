@@ -114,7 +114,6 @@ fun SearchScreen(
                 value = topSearchText,
                 onValueChange = { newText ->
                     topSearchText = newText
-                    Log.e("topSearchText", "$newText $topSearchText")
                 },
                 singleLine = true, // 텍스트 필드를 한 줄로 제한
                 textStyle = TextStyle(

@@ -346,7 +346,6 @@ fun HomeScreen(
                 HomeFinancialItem(
                     item = item,
                     onItemClick = { financialItem ->
-                        Log.e("item", financialItem.toString())
                         navController.navigate("edit_financial?type=edit&id=${financialItem.id}")
                     },
                     onLongClick = {

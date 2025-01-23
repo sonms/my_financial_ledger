@@ -283,7 +283,6 @@ fun ChartScreen(
 
     if (isEmotionBottomSheetOpen) {
         val context = LocalContext.current
-        Log.e("test3", "test3")
         MonthDropDownButtonBottomSheet(
             modifier = Modifier.height(160.dp),
             monthData = yearMonths.ifEmpty {

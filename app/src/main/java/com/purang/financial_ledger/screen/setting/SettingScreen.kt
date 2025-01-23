@@ -54,7 +54,6 @@ fun SettingScreen() {
             onSwitchChange = { state ->
                 scope.launch {
                     PreferencesDataStore.saveState(context, state)
-                    Log.e("stateSet", "$state")
                 }
             }
         )

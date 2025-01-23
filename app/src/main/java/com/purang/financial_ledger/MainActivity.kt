@@ -218,7 +218,6 @@ fun NavigationGraph(navController: NavHostController, homeViewModel: HomeViewMod
             )
         ) { backStackEntry ->
             val searchText = backStackEntry.arguments?.getString("searchText") ?: ""
-            Log.d("SearchScreen", "searchText received: $searchText")
             SearchScreen(navController, searchText)
         }
     }

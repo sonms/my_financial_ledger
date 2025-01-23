@@ -64,7 +64,6 @@ class HomeViewModel @Inject constructor(
             _categoryId.switchMap { categoryId ->
                 if (month != null) {
                     val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
-                    Log.e("SelectedMonth", "Fetching events for: ${month.year}-$formattedMonth, categoryId: $categoryId")
                     financialRepo.getEventsByMonth(
                         year = month.year.toString(),
                         month = formattedMonth,
@@ -103,8 +102,6 @@ class HomeViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     fun fetchBeforeByMonth(yearMonth: YearMonth) {
         _selectedBeforeMonth.value = yearMonth
-        Log.d("ViewModel", "selectedBeforeMonth: ${_selectedBeforeMonth.value}")
-        Log.d("ViewModel", "selectedBeforeMonthTotals: ${selectedBeforeMonthTotals.value}")
     }
 
     fun fetchCategoryId(categoryId: Long?) {
@@ -156,7 +153,6 @@ class HomeViewModel @Inject constructor(
     @RequiresApi(Build.VERSION_CODES.O)
     val selectedMonthTotals: LiveData<TotalIncomeExpenditure> = _selectedMonth.switchMap { month ->
         val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
-        Log.e("select1", "Fetching events for: ${month.year}-$formattedMonth")
         financialRepo.getTotalIncomeExpenditure(month.year.toString(), formattedMonth)
     }
 
@@ -164,7 +160,6 @@ class HomeViewModel @Inject constructor(
     val selectedBeforeYearMonthTotals: LiveData<TotalIncomeExpenditure> = _selectedBeforeYearMonth.switchMap { month ->
         val formattedMonth = String.format("%02d", month.monthValue) // Format month as two digits
         val year = month.year - 1
-        Log.e("select2", "Fetching events for: ${year}-$formattedMonth")
         financialRepo.getBeforeTotalIncomeExpenditureByYearMonth(year.toString(), formattedMonth)
     }
 
@@ -188,7 +183,6 @@ class HomeViewModel @Inject constructor(
         } else {
             month.year to String.format("%02d", month.monthValue - 1)
         }
-        Log.e("select3", "Fetching events for: ${year}-$formattedMonth")
         financialRepo.getBeforeTotalIncomeExpenditureByMonth(year.toString(), formattedMonth)
     }
 
@@ -216,7 +210,6 @@ class HomeViewModel @Inject constructor(
                 expenditure = expenditure,
                 income = income
             )
-            Log.e("addFinancialData", newTodo.toString())
             financialRepo.insertData(newTodo)
         }
     }
@@ -242,7 +235,6 @@ class HomeViewModel @Inject constructor(
                 expenditure = expenditure,
                 income = income
             )
-            Log.e("update", newTodo.toString())
             financialRepo.updateData(newTodo)
         }
     }
