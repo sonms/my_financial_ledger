@@ -1,7 +1,6 @@
 package com.purang.financial_ledger.screen.edit
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -47,7 +45,6 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -68,7 +65,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavOptions
-import androidx.navigation.compose.currentBackStackEntryAsState
 import com.purang.financial_ledger.MainActivity
 import com.purang.financial_ledger.R
 import com.purang.financial_ledger.loading.DialogState
@@ -78,13 +74,11 @@ import com.purang.financial_ledger.ui.theme.blueP2
 import com.purang.financial_ledger.ui.theme.blueP3
 import com.purang.financial_ledger.ui.theme.blueP4
 import com.purang.financial_ledger.ui.theme.blueP5
-import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.ui.theme.blueP7
 import com.purang.financial_ledger.ui.theme.pink7
 import com.purang.financial_ledger.ui.theme.redInDark
 import com.purang.financial_ledger.view_model.CategoryViewModel
 import com.purang.financial_ledger.view_model.HomeViewModel
-import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.YearMonth
@@ -666,7 +660,10 @@ fun EditCalendar(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = "확인")
+                    Text(
+                        text = "확인",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
@@ -710,7 +707,10 @@ fun EditCategoryCreateDialog(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = blueP3
-                )
+                ),
+                label = {
+                    Text(text = "이곳을 눌러 생성")
+                }
             )
 
 
@@ -724,8 +724,13 @@ fun EditCategoryCreateDialog(
                         contentColor = Color.White // 텍스트 색상 설정
                     ),
                 ) {
-                    Text(text = "확인", color = blueP2)
+                    Text(
+                        text = "확인",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
+                
+                Spacer(modifier = Modifier.width(5.dp))
 
                 Button(
                     onClick = { onCancelClick() },
@@ -844,7 +849,10 @@ fun EditTransaction(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = redInDark,
                     unfocusedBorderColor = redInDark
-                )
+                ),
+                label = {
+                    Text(text = "이곳을 눌러 추가")
+                }
             )
         }
 
@@ -887,7 +895,10 @@ fun EditTransaction(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = blueExDark,
                     unfocusedBorderColor = blueExDark
-                )
+                ),
+                label = {
+                    Text(text = "이곳을 눌러 추가")
+                }
             )
         }
     }

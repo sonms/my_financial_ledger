@@ -18,19 +18,22 @@ val blueP5 = Color(0xFFA3A1FE)
 val blueP6 = Color(0xFF8281CC)
 val blueP7 = Color(0xFF626199)
 
-val pink1 = Color(0xFFFCF1F4)
-val pink2 = Color(0xFFF9E3E9)
-val pink3 = Color(0xFFF5D4DE)
-val pink4 = Color(0xFFF2C6D3)
-val pink5 = Color(0xFFEFB8C8)
-val pink6 = Color(0xFFBF93A0)
-val pink7 = Color(0xFF8F6E78)
+// Pink Colors
+val pink1 = Color(0xFFFFEBF0)  // 밝은 핑크 (기존보다 더 밝음)
+val pink2 = Color(0xFFF8D8E3)  // 중간 명도 핑크
+val pink3 = Color(0xFFF1C5D1)  // 약간 더 강렬한 핑크
+val pink4 = Color(0xFFEAB2BF)  // 중간 정도의 대비
+val pink5 = Color(0xFFD78EA2)  // 메인 핑크 대비 색
+val pink6 = Color(0xFFA05D70)  // 어두운 핑크 (텍스트 대비 가능)
+val pink7 = Color(0xFF704351)  // 매우 어두운 핑크 (배경 대비 텍스트 적합)
 
+// Blue Colors
+val blueExDark = Color(0xFF1976D2)  // 기존 대비 향상
+val blueExLight = Color(0xFF1565C0) // 더 높은 대비를 위해 조정
 
-val blueExDark = Color(0xFF2196F3)
-val blueExLight = Color(0xFF216EF3)
-val redInDark = Color(0xFFFDB0C7)
-val redInLight = Color(0xFFCE245D)
+// Red Colors
+val redInDark = Color(0xFFD81B60)   // 어두운 대비 (기존 대비 향상)
+val redInLight = Color(0xFFFFA4B4)  // 밝은 대비 조정 (기존보다 대비 개선)
 
 val redD = Color(0xFFC7235B)
 val blueD = Color(0xFF3F51B5)

@@ -1,14 +1,11 @@
 package com.purang.financial_ledger.view_model
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.purang.financial_ledger.repository.CategoryRepository
-import com.purang.financial_ledger.repository.FinancialRepository
-import com.purang.financial_ledger.room_db.FinancialEntity
 import com.purang.financial_ledger.room_db.category.CategoryEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch

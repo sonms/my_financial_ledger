@@ -10,11 +10,9 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -26,17 +24,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,20 +52,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.purang.financial_ledger.model.TotalIncomeExpenditure
 import com.purang.financial_ledger.room_db.FinancialEntity
 import com.purang.financial_ledger.room_db.category.CategoryEntity
 import com.purang.financial_ledger.screen.home.MonthDropDownButtonBottomSheet
 import com.purang.financial_ledger.ui.theme.blueD
 import com.purang.financial_ledger.ui.theme.blueExDark
-import com.purang.financial_ledger.ui.theme.blueExLight
 import com.purang.financial_ledger.ui.theme.blueP3
-import com.purang.financial_ledger.ui.theme.blueP4
-import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.blueP7
-import com.purang.financial_ledger.ui.theme.pink3
-import com.purang.financial_ledger.ui.theme.pink4
 import com.purang.financial_ledger.ui.theme.pink7
 import com.purang.financial_ledger.ui.theme.redD
 import com.purang.financial_ledger.ui.theme.redInDark
@@ -202,82 +190,55 @@ fun ChartScreen(
             )
         }
 
-        LazyColumn (
-            modifier = Modifier.padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            item {
-                if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
-                    TotalGraph(
-                        modifier = Modifier.padding(bottom = 20.dp),
-                        colors = listOf(redInDark,blueExDark),
-                        data = listOf(
-                            (monthTotalIncomeExpenditure.totalIncome!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat()),
-                            (monthTotalIncomeExpenditure.totalExpenditure!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat())
-                        ),
-                        graphHeight = 120,
-                        onClick = {
-                            isClickGraphInfo = !isClickGraphInfo
-                        }
-                    )
-
-                    if (isClickGraphInfo) {
-                        GraphDetailInfo(
-                            dataExpenditure = monthTotalIncomeExpenditure.totalExpenditure,
-                            dataIncome = monthTotalIncomeExpenditure.totalIncome
-                        )
-                    }
-
-                    GraphInfo(
-                        dataExpenditure = monthTotalIncomeExpenditure.totalExpenditure,
-                        dataIncome = monthTotalIncomeExpenditure.totalIncome
-                    )
-
-                    //전년도 같은 월
-                    CompareBeforeYearMonthTotalAmount(beforeYearMonthDataCheck)
-                    //이전 달
-                    CompareBeforeMonthTotalAmount(beforeMonthDataCheck)
-
-                } else {
-                    Text(text = "해당 월에 데이터가 존재하지 않습니다.")
+        if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
+            TotalGraph(
+                modifier = Modifier.padding(bottom = 20.dp),
+                colors = listOf(redInDark,blueExDark),
+                data = listOf(
+                    (monthTotalIncomeExpenditure.totalIncome!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat()),
+                    (monthTotalIncomeExpenditure.totalExpenditure!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat())
+                ),
+                graphHeight = 120,
+                onClick = {
+                    isClickGraphInfo = !isClickGraphInfo
                 }
+            )
+
+            if (isClickGraphInfo) {
+                GraphDetailInfo(
+                    dataExpenditure = monthTotalIncomeExpenditure.totalExpenditure,
+                    dataIncome = monthTotalIncomeExpenditure.totalIncome
+                )
             }
 
-            /*item {
-                CategoryChartScreen(
-                    selectFinancialDataByCategoryId,
-                    categoryAllData
-                ) {
-                    selectCategoryId = it
-                }
-            }*/
+            GraphInfo(
+                dataExpenditure = monthTotalIncomeExpenditure.totalExpenditure,
+                dataIncome = monthTotalIncomeExpenditure.totalIncome
+            )
 
-            stickyHeader {
-                if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
-                    CategoryStickyHeader(
-                        categoryData = categoryAllData,
-                        onCategoryClick = {
-                            selectCategoryId = it
-                        }
-                    )
-                }
-            }
+            //전년도 같은 월
+            CompareBeforeYearMonthTotalAmount(beforeYearMonthDataCheck)
+            //이전 달
+            CompareBeforeMonthTotalAmount(beforeMonthDataCheck)
 
-            item {
-                if (selectFinancialDataByCategoryId.isNotEmpty()) {
-                    GraphByCategory(selectFinancialDataByCategoryId = selectFinancialDataByCategoryId)
-                } else {
-                    Text(text = "해당 카테고리에 데이터가 존재하지 않습니다.")
-                }
-            }
+        } else {
+            Text(text = "해당 월에 데이터가 존재하지 않습니다.")
         }
 
+        if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
+            CategoryStickyHeader(
+                categoryData = categoryAllData,
+                onCategoryClick = {
+                    selectCategoryId = it
+                }
+            )
+        }
 
-
-
-
-
+        if (selectFinancialDataByCategoryId.isNotEmpty()) {
+            GraphByCategory(selectFinancialDataByCategoryId = selectFinancialDataByCategoryId)
+        } else {
+            Text(text = "해당 카테고리에 데이터가 존재하지 않습니다.")
+        }
     }
     //
 
