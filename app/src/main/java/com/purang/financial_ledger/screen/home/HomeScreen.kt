@@ -319,6 +319,7 @@ fun HomeScreen(
                         },
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
+                        color = Color.White
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))

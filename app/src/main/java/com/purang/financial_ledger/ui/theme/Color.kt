@@ -37,3 +37,12 @@ val redInLight = Color(0xFFFFA4B4)  // 밝은 대비 조정 (기존보다 대비
 
 val redD = Color(0xFFC7235B)
 val blueD = Color(0xFF3F51B5)
+
+fun validateColor(color: Color): Color {
+    return color.copy(
+        alpha = color.alpha.coerceIn(0f, 1f),
+        red = color.red.coerceIn(0f, 1f),
+        green = color.green.coerceIn(0f, 1f),
+        blue = color.blue.coerceIn(0f, 1f)
+    )
+}

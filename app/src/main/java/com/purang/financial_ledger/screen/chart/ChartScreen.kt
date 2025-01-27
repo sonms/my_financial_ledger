@@ -58,11 +58,14 @@ import com.purang.financial_ledger.room_db.category.CategoryEntity
 import com.purang.financial_ledger.screen.home.MonthDropDownButtonBottomSheet
 import com.purang.financial_ledger.ui.theme.blueD
 import com.purang.financial_ledger.ui.theme.blueExDark
+import com.purang.financial_ledger.ui.theme.blueExLight
 import com.purang.financial_ledger.ui.theme.blueP3
 import com.purang.financial_ledger.ui.theme.blueP7
 import com.purang.financial_ledger.ui.theme.pink7
 import com.purang.financial_ledger.ui.theme.redD
 import com.purang.financial_ledger.ui.theme.redInDark
+import com.purang.financial_ledger.ui.theme.redInLight
+import com.purang.financial_ledger.ui.theme.validateColor
 import com.purang.financial_ledger.view_model.CategoryViewModel
 import com.purang.financial_ledger.view_model.HomeViewModel
 import kotlinx.coroutines.launch
@@ -191,9 +194,15 @@ fun ChartScreen(
         }
 
         if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
+            val validatedBlueExDark = validateColor(blueExDark)
+            val validatedBlueExLight = validateColor(blueExLight)
+            val validatedRedInDark = validateColor(redInDark)
+            val validatedRedInLight = validateColor(redInLight)
+
+
             TotalGraph(
                 modifier = Modifier.padding(bottom = 20.dp),
-                colors = listOf(redInDark,blueExDark),
+                colors = listOf(validatedRedInLight,validatedBlueExLight),
                 data = listOf(
                     (monthTotalIncomeExpenditure.totalIncome!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat()),
                     (monthTotalIncomeExpenditure.totalExpenditure!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat())

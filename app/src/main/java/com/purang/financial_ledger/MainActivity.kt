@@ -2,7 +2,6 @@ package com.purang.financial_ledger
 
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
@@ -38,8 +37,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.purang.financial_ledger.preferences_data_store.PreferencesDataStore
 import com.purang.financial_ledger.loading.GlobalLoadingScreen
+import com.purang.financial_ledger.preferences_data_store.PreferencesDataStore
 import com.purang.financial_ledger.screen.calendar.CalendarScreen
 import com.purang.financial_ledger.screen.chart.ChartScreen
 import com.purang.financial_ledger.screen.edit.EditFinancialScreen
@@ -47,8 +46,6 @@ import com.purang.financial_ledger.screen.home.HomeScreen
 import com.purang.financial_ledger.screen.search.SearchScreen
 import com.purang.financial_ledger.screen.setting.SettingScreen
 import com.purang.financial_ledger.ui.theme.Financial_LedgerTheme
-import com.purang.financial_ledger.ui.theme.blueP4
-import com.purang.financial_ledger.ui.theme.blueP6
 import com.purang.financial_ledger.view_model.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -171,9 +168,9 @@ fun BottomNavigation(navController: NavController) {
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = blueP4,
+                    selectedIconColor = MaterialTheme.colorScheme.onTertiary,
                     //indicatorColor = MaterialTheme.colorScheme.background,
-                    selectedTextColor = blueP6
+                    selectedTextColor = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             )
         }
