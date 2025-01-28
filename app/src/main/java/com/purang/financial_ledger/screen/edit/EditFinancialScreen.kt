@@ -27,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -49,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,7 +83,6 @@ import com.purang.financial_ledger.view_model.CategoryViewModel
 import com.purang.financial_ledger.view_model.HomeViewModel
 import java.text.SimpleDateFormat
 import java.time.LocalDate
-import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
@@ -128,19 +129,19 @@ fun EditFinancialScreen(
 
 
     var selectedDate by remember {
-        mutableStateOf("")
+        mutableStateOf<String?>(null)
     }
 
     LaunchedEffect(movedDateData) {
         selectedDate = if (movedDateData.isNullOrEmpty()) {
-            YearMonth.now().toString()
+            LocalDate.now().toString()
         } else {
             movedDateData.toString()
         }
     }
 
     var textTitle by remember {
-        mutableStateOf("")
+        mutableStateOf<String?>(null)
     }
     var textContent by remember {
         mutableStateOf("")
@@ -151,6 +152,10 @@ fun EditFinancialScreen(
     }
     var editExpenditure by remember {
         mutableStateOf("")
+    }
+
+    var isError by remember {
+        mutableStateOf(false)
     }
 
     if (type != "default") {
@@ -207,10 +212,11 @@ fun EditFinancialScreen(
         ) {
             item {
                 EditTitle(
-                    textTitle = textTitle,
+                    textTitle = textTitle ?: "",
                     onTextChange = { newText ->
                         textTitle = newText
-                    }
+                    },
+                    isError = isError
                 )
             }
 
@@ -240,10 +246,14 @@ fun EditFinancialScreen(
                                 modifier = Modifier
                                     .padding(5.dp)
                                     .background(blueP4, RoundedCornerShape(8.dp))
-                                    .wrapContentSize()
+                                    .wrapContentSize(),
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Icon(
                                     Icons.Default.Add,
+                                    modifier = Modifier
+                                        .wrapContentSize()
+                                        .padding(5.dp),
                                     contentDescription = "AddCategory",
                                 )
                             }
@@ -277,6 +287,7 @@ fun EditFinancialScreen(
                 // Date Picker
                 EditCalendar(
                     selectDate = selectedDate,
+                    isError = isError,
                     onClickCancel = { /*TODO*/ }
                 ) {//on click confirm
                     val parsedDate = SimpleDateFormat("yyyyMMdd", Locale.KOREAN).parse(it)
@@ -310,22 +321,26 @@ fun EditFinancialScreen(
                         onClick = {
                             //추가
                             if (type == "default") {
-                                viewModel.addFinancialData(
-                                    categoryId = selectCategory?.id,
-                                    title = textTitle,
-                                    content = textContent,
-                                    date = selectedDate,
-                                    expenditure = editExpenditure.toLongOrNull() ?: 0L,
-                                    income = editIncome.toLongOrNull() ?: 0L
-                                )
-                                //Log.e("defaultAdd", createFinancialData.toString())
-                                navController.navigate(
-                                    MainActivity.BottomNavItem.Home.screenRoute,
-                                    NavOptions.Builder()
-                                        .setLaunchSingleTop(true)  // 이미 존재하는 화면을 재사용하지 않음
-                                        .setPopUpTo(navController.graph.startDestinationId, true)  // 이전 화면을 스택에서 제거
-                                        .build()
-                                )
+                                if (textTitle.isNullOrEmpty()) {
+                                    isError = true
+                                } else {
+                                    viewModel.addFinancialData(
+                                        categoryId = selectCategory?.id,
+                                        title = textTitle,
+                                        content = textContent,
+                                        date = selectedDate,
+                                        expenditure = editExpenditure.toLongOrNull() ?: 0L,
+                                        income = editIncome.toLongOrNull() ?: 0L
+                                    )
+                                    //Log.e("defaultAdd", createFinancialData.toString())
+                                    navController.navigate(
+                                        MainActivity.BottomNavItem.Home.screenRoute,
+                                        NavOptions.Builder()
+                                            .setLaunchSingleTop(true)  // 이미 존재하는 화면을 재사용하지 않음
+                                            .setPopUpTo(navController.graph.startDestinationId, true)  // 이전 화면을 스택에서 제거
+                                            .build()
+                                    )
+                                }
                             } else {
                                 //수정
                                 viewModel.updateFinancialData(
@@ -361,8 +376,10 @@ fun EditFinancialScreen(
         if (isShowingCategoryDialog) {
             EditCategoryCreateDialog(
                 onConfirmClick = { newCategory ->
-                    categoryViewModel.addCategory(newCategory)
-                    isShowingCategoryDialog = false
+                    if (newCategory.isNotEmpty()) {
+                        categoryViewModel.addCategory(newCategory)
+                        isShowingCategoryDialog = false
+                    }
                 },
                 onCancelClick = { isShowingCategoryDialog = false }
             )
@@ -375,9 +392,11 @@ fun EditFinancialScreen(
 @Composable
 fun EditTitle(
     textTitle: String,
-    onTextChange: (String) -> Unit
+    onTextChange: (String) -> Unit,
+    isError : Boolean
 ) {
     val textColor = MaterialTheme.colorScheme.primary // 동적으로 색상변경
+    val isErrorCheck by rememberSaveable { mutableStateOf(isError) }
     /*var isError by rememberSaveable { mutableStateOf(false) }
 
     fun validate(text: String?) {
@@ -394,12 +413,17 @@ fun EditTitle(
                 onTextChange(it)
                 //validate(it)
             },
+            trailingIcon = {
+                if (isError)
+                    Icon(Icons.Default.Info,"error", tint = MaterialTheme.colorScheme.error)
+            },
             singleLine = false,
             textStyle = TextStyle(
                 color = textColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Normal,
             ),
+            isError = isErrorCheck,
             /*trailingIcon = {
                 if (isError)
                     Icon(Icons.Filled.Info, "빈 칸을 채워주세요!", tint = MaterialTheme.colorScheme.error)
@@ -417,7 +441,16 @@ fun EditTitle(
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp
                 )
-            }
+            },
+            supportingText = {
+                if (isError) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "제목을 입력하세요.",
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
         )
 
         /*Spacer(
@@ -480,11 +513,14 @@ fun EditContent(
 @Composable
 fun EditCalendar(
     selectDate : String?,
+    isError: Boolean,
     onClickCancel: () -> Unit,
     onClickConfirm: (yyyyMMdd: String) -> Unit
 ) { //날짜 설정 칸?
     val isDialogShowing by DialogState.isShowing.collectAsState()
-
+    val isErrorCheck by rememberSaveable {
+        mutableStateOf(isError)
+    }
 
     Column (
         modifier = Modifier
@@ -678,6 +714,7 @@ fun EditCategoryCreateDialog(
     var createCategory by remember {
         mutableStateOf("")
     }
+    var isError by remember { mutableStateOf(false) }
 
     Dialog(
         onDismissRequest = { onCancelClick() }
@@ -710,7 +747,17 @@ fun EditCategoryCreateDialog(
                 ),
                 label = {
                     Text(text = "이곳을 눌러 생성")
-                }
+                },
+                isError = isError,
+                supportingText = {
+                    if (isError) {
+                        Text(
+                            modifier = Modifier.fillMaxWidth(),
+                            text = "카테고리를 입력하세요.",
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                },
             )
 
 
@@ -718,7 +765,13 @@ fun EditCategoryCreateDialog(
                 modifier = Modifier.align(Alignment.End)
             ) {
                 Button(
-                    onClick = { onConfirmClick(createCategory) },
+                    onClick = {
+                        if (createCategory.isNotEmpty()) {
+                            onConfirmClick(createCategory)
+                        } else {
+                            isError = true
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = blueP5, // 버튼 배경색
                         contentColor = Color.White // 텍스트 색상 설정
@@ -801,6 +854,7 @@ fun EditTransaction(
         mutableStateOf("")
     }*/
     val focusManager = LocalFocusManager.current
+
 
     Row (
         modifier = Modifier
