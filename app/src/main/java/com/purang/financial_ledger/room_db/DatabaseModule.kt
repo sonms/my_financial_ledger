@@ -25,7 +25,8 @@ object DatabaseModule {
             AppDatabase::class.java,
             "financial-database"
         )
-            .addMigrations(AppDatabase.MIGRATION_1_2) // 마이그레이션 추가
+            .addMigrations(AppDatabase.MIGRATION_1_2) // 기존 마이그레이션
+            .addMigrations(AppDatabase.MIGRATION_2_3) // 새 마이그레이션 추가
             .build()
     }
 
@@ -39,7 +40,7 @@ object DatabaseModule {
     @RequiresApi(Build.VERSION_CODES.O)
     @Singleton
     @Provides
-    fun provideCategoryDao(database: AppDatabase): CategoryDao { // CategoryDao 추가
+    fun provideCategoryDao(database: AppDatabase): CategoryDao {
         return database.getCategoryDao()
     }
 }

@@ -5,21 +5,25 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -61,6 +65,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -71,14 +76,20 @@ import com.purang.financial_ledger.MainActivity
 import com.purang.financial_ledger.R
 import com.purang.financial_ledger.loading.DialogState
 import com.purang.financial_ledger.room_db.category.CategoryEntity
+import com.purang.financial_ledger.ui.theme.blue
 import com.purang.financial_ledger.ui.theme.blueExDark
 import com.purang.financial_ledger.ui.theme.blueP2
 import com.purang.financial_ledger.ui.theme.blueP3
 import com.purang.financial_ledger.ui.theme.blueP4
 import com.purang.financial_ledger.ui.theme.blueP5
 import com.purang.financial_ledger.ui.theme.blueP7
+import com.purang.financial_ledger.ui.theme.green
+import com.purang.financial_ledger.ui.theme.orange
+import com.purang.financial_ledger.ui.theme.pink5
 import com.purang.financial_ledger.ui.theme.pink7
+import com.purang.financial_ledger.ui.theme.purple
 import com.purang.financial_ledger.ui.theme.redInDark
+import com.purang.financial_ledger.ui.theme.yellow
 import com.purang.financial_ledger.view_model.CategoryViewModel
 import com.purang.financial_ledger.view_model.HomeViewModel
 import java.text.SimpleDateFormat
@@ -126,8 +137,6 @@ fun EditFinancialScreen(
         categoryDataList.find { it.id == categoryId }
     }
 
-
-
     var selectedDate by remember {
         mutableStateOf<String?>(null)
     }
@@ -152,6 +161,10 @@ fun EditFinancialScreen(
     }
     var editExpenditure by remember {
         mutableStateOf("")
+    }
+
+    var selectedColor by remember {
+        mutableStateOf<Color?>(null)
     }
 
     var isError by remember {
@@ -194,6 +207,15 @@ fun EditFinancialScreen(
             verticalAlignment = Alignment.Top,
             horizontalArrangement = Arrangement.Start
         ) {
+            EditColor(
+                onCancelClick = {
+                },
+                onClickColor = {
+                    selectedColor = it
+                }
+            )
+
+
             IconButton(onClick = { navController.popBackStack() }) {
                 Column(
                     modifier = Modifier
@@ -330,7 +352,8 @@ fun EditFinancialScreen(
                                         content = textContent,
                                         date = selectedDate,
                                         expenditure = editExpenditure.toLongOrNull() ?: 0L,
-                                        income = editIncome.toLongOrNull() ?: 0L
+                                        income = editIncome.toLongOrNull() ?: 0L,
+                                        selectColor = selectedColor
                                     )
                                     //Log.e("defaultAdd", createFinancialData.toString())
                                     navController.navigate(
@@ -350,7 +373,8 @@ fun EditFinancialScreen(
                                     content = textContent,
                                     date = selectedDate,
                                     expenditure = editExpenditure.toLongOrNull() ?: 0L,
-                                    income = editIncome.toLongOrNull() ?: 0L
+                                    income = editIncome.toLongOrNull() ?: 0L,
+                                    selectColor = selectedColor
                                 )
                                 navController.navigate(
                                     MainActivity.BottomNavItem.Home.screenRoute,
@@ -829,7 +853,9 @@ fun EditCategoryItem(
             modifier = if (isSelected) Modifier.padding(start = 10.dp, bottom = 10.dp, top = 10.dp) else Modifier.padding(10.dp),
             text = item.categoryName,
             fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1
         )
 
         if (isSelected) {
@@ -954,6 +980,83 @@ fun EditTransaction(
                     Text(text = "이곳을 눌러 추가")
                 }
             )
+        }
+    }
+}
+
+@Composable
+fun EditColor (
+    onCancelClick: () -> Unit,
+    onClickColor:(Color) -> Unit
+) {
+    var isClickText by remember {
+        mutableStateOf(false)
+    }
+
+    var selectedColor by remember {
+        mutableStateOf(Color.Transparent)
+    }
+
+    val colorList = listOf(Color.Red, orange, yellow, green, blue, purple, pink5, blueP5)
+
+    Row (
+        modifier = Modifier,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = "색 설정하기",
+            modifier = Modifier.clickable {
+                isClickText = !isClickText
+            }
+        )
+
+        // 선택한 색상 표시
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .background(selectedColor, shape = CircleShape)
+                .border(1.dp, Color.Gray, shape = CircleShape)
+        )
+
+        if (isClickText) {
+            Dialog(
+                onDismissRequest = {
+                    onCancelClick()
+                    isClickText = !isClickText
+                }
+            ) {
+                Card (
+                    modifier = Modifier
+                        .width(320.dp)
+                        .wrapContentHeight()
+                        .padding(10.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    /*colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),*/
+                ) {
+                    LazyRow (
+                        modifier = Modifier.padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        itemsIndexed(
+                            items = colorList
+                        ) { _, item ->
+                            Box(
+                                modifier = Modifier
+                                    .background(item, CircleShape)
+                                    .border(2.dp, Color.Gray, shape = CircleShape)
+                                    .size(24.dp)
+                                    .clickable {
+                                        selectedColor = item
+                                        onClickColor(item)
+                                        isClickText = false
+                                    }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -38,6 +38,13 @@ val redInLight = Color(0xFFFFA4B4)  // 밝은 대비 조정 (기존보다 대비
 val redD = Color(0xFFC7235B)
 val blueD = Color(0xFF3F51B5)
 
+//아이템에 적용할 색상
+val orange = Color(0xFFFF9800)
+val yellow = Color(0xFFFFEB3B)
+val green = Color(0xFF4CAF50)
+val blue = Color(0xFF2196F3)
+val purple = Color(0xFF673AB7)
+
 fun validateColor(color: Color): Color {
     return color.copy(
         alpha = color.alpha.coerceIn(0f, 1f),

@@ -1,12 +1,11 @@
 package com.purang.financial_ledger.view_model
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
 import androidx.lifecycle.map
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
@@ -192,7 +191,7 @@ class HomeViewModel @Inject constructor(
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun addFinancialData(categoryId : Long?, title : String?, content : String?, date : String?, expenditure:Long?, income:Long?) {
+    fun addFinancialData(categoryId : Long?, title : String?, content : String?, date : String?, expenditure:Long?, income:Long?, selectColor : Color?) {
         /*
         *  val categoryId: Long?,
     val content: String?,
@@ -208,7 +207,8 @@ class HomeViewModel @Inject constructor(
                 content = content,
                 date = date,
                 expenditure = expenditure,
-                income = income
+                income = income,
+                selectColor = selectColor
             )
             financialRepo.insertData(newTodo)
         }
@@ -216,7 +216,7 @@ class HomeViewModel @Inject constructor(
 
 
     @RequiresApi(Build.VERSION_CODES.O)
-    fun updateFinancialData(id: Long, categoryId : Long?, title : String?, content : String?, date : String?, expenditure:Long?, income:Long?) {
+    fun updateFinancialData(id: Long, categoryId : Long?, title : String?, content : String?, date : String?, expenditure:Long?, income:Long?,  selectColor : Color?) {
         /*
         *  val categoryId: Long?,
     val content: String?,
@@ -233,7 +233,8 @@ class HomeViewModel @Inject constructor(
                 content = content,
                 date = date,
                 expenditure = expenditure,
-                income = income
+                income = income,
+                selectColor = selectColor
             )
             financialRepo.updateData(newTodo)
         }

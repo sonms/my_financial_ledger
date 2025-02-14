@@ -2,6 +2,7 @@ package com.purang.financial_ledger.room_db
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.graphics.Color
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -38,6 +39,8 @@ data class FinancialEntity(
     var expenditure : Long?, //지출
     @ColumnInfo
     var income : Long?, //호득, 수입 등
+    @ColumnInfo
+    var selectColor : Color?
 )
 
 
