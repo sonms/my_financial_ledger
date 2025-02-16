@@ -200,18 +200,28 @@ fun ChartScreen(
             val validatedRedInLight = validateColor(redInLight)
 
 
-            TotalGraph(
-                modifier = Modifier.padding(bottom = 20.dp),
-                colors = listOf(validatedRedInLight,validatedBlueExLight),
-                data = listOf(
-                    (monthTotalIncomeExpenditure.totalIncome!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat()),
-                    (monthTotalIncomeExpenditure.totalExpenditure!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat())
-                ),
-                graphHeight = 120,
-                onClick = {
-                    isClickGraphInfo = !isClickGraphInfo
-                }
-            )
+            //모든 지출들의 합과 수익들의 합이 각 0이면 그래프 그릴필요없음
+            if ((monthTotalIncomeExpenditure.totalIncome == 0L) && (monthTotalIncomeExpenditure.totalExpenditure == 0L)) {
+                Text(
+                    text = "작성한 금액이 모두 0으로 \n표시할 그래프가 없습니다",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            } else {
+                TotalGraph(
+                    modifier = Modifier.padding(bottom = 20.dp),
+                    colors = listOf(validatedRedInLight,validatedBlueExLight),
+                    data = listOf(
+                        (monthTotalIncomeExpenditure.totalIncome!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat()),
+                        (monthTotalIncomeExpenditure.totalExpenditure!! / (monthTotalIncomeExpenditure.totalIncome!! + monthTotalIncomeExpenditure.totalExpenditure!!).toFloat())
+                    ),
+                    graphHeight = 120,
+                    onClick = {
+                        isClickGraphInfo = !isClickGraphInfo
+                    }
+                )
+            }
+
 
             if (isClickGraphInfo) {
                 GraphDetailInfo(
@@ -246,7 +256,11 @@ fun ChartScreen(
         if (selectFinancialDataByCategoryId.isNotEmpty()) {
             GraphByCategory(selectFinancialDataByCategoryId = selectFinancialDataByCategoryId)
         } else {
-            Text(text = "해당 카테고리에 데이터가 존재하지 않습니다.")
+            if (categoryAllData.isNotEmpty()) {
+                Text(text = "카테고리를 선택해주세요.")
+            } else {
+                Text(text = "카테고리가 존재하지 않습니다.")
+            }
         }
     }
     //
@@ -384,60 +398,52 @@ internal fun TotalGraph(
     val total = data.sum().coerceAtLeast(0.00001f) // 데이터 리스트에 있는 값의 총합 구하기, 0으로 나누기방지
     val angles = data.map { (it / total * 360f).coerceIn(0f, 360f) } // 데이터 값의 비율을 구하고, 360도를 기준으로 한 각도로 변환하여 리스트로 저장하기, 0~360으로제한
 
-    if (total == 0f || angles.containsAll(listOf(0f,0f))) {
-        val angleList = remember(data) { angles.map { Animatable(0f) } }
+    val angleList = remember(data) { angles.map { Animatable(0f) } }
 
-        LaunchedEffect(data) { // data가 변경될 때마다 애니메이션을 다시 시작
-            angleList.forEachIndexed { index, value ->
-                launch {
-                    value.snapTo(0f) // 애니메이션 시작 전 각도를 0으로 설정
+    LaunchedEffect(data) { // data가 변경될 때마다 애니메이션을 다시 시작
+        angleList.forEachIndexed { index, value ->
+            launch {
+                value.snapTo(0f) // 애니메이션 시작 전 각도를 0으로 설정
 
-                    val targetValue = angles[index]
+                val targetValue = angles[index]
 
-                    if (!targetValue.isNaN()) {
-                        value.animateTo( // 각도를 목표 각도까지 애니메이션을 적용
-                            targetValue = angles[index],
-                            animationSpec = tween( // 애니메이션을 정의할 때 사용하는 함수로 시간에 따라 값이 변경되는 함수로 애니메이션 시작 값에서 목표 값까지 일정 속도로 변화한다.
-                                durationMillis = 1000, // 애니메이션이 1초 동안 지속
-                                easing = LinearOutSlowInEasing // 애니메이션의 속도 곡선을 설정
-                            )
+                if (!targetValue.isNaN()) {
+                    value.animateTo( // 각도를 목표 각도까지 애니메이션을 적용
+                        targetValue = angles[index],
+                        animationSpec = tween( // 애니메이션을 정의할 때 사용하는 함수로 시간에 따라 값이 변경되는 함수로 애니메이션 시작 값에서 목표 값까지 일정 속도로 변화한다.
+                            durationMillis = 1000, // 애니메이션이 1초 동안 지속
+                            easing = LinearOutSlowInEasing // 애니메이션의 속도 곡선을 설정
                         )
-                    }
+                    )
                 }
             }
         }
+    }
 
-        // Canvas를 사용하여 그래프를 그리고 `graphHeight.dp`를 픽셀 단위로 변환하여 그래프의 높이를 설정
-        Canvas(
-            modifier = modifier
-                .height(graphHeight.dp)
-                .clickable { onClick() }
-        ) {
-            /*
-             * 그래프의 선 두께를 지정
-             * `strokeWidth = 4f`로 설정하면 선이 4 픽셀 두꺼워진다.
-             * 값이 커질수록 더 굵은 선이 그려지며, 작아질수록 더 얇은 선이 그려진다.
-             */
-            val strokeWidth = graphHeight.dp.toPx() / 4
-            /*
-             * 원형 그래프의 반지름을 나타내는 값으로 그래프의 크기와 위치를 결정한다.
-             * 원의 중심에서 외곽선까지의 거리를 `radius`로 설정한다.
-             * `radius`는 그래프 높이에서 선 두께를 빼고 2로 나눈 값으로 설정한다.
-             * `radius = 50f`으로 설정하면 원의 중심에서부터 50 픽셀 떨어진 위치에 그려진다.
-             */
-            val radius = (graphHeight.dp.toPx() - strokeWidth) / 2
-            // 그래프의 중심 좌표
-            val centerX = size.width / 2f
-            val centerY = radius + strokeWidth / 2
+    // Canvas를 사용하여 그래프를 그리고 `graphHeight.dp`를 픽셀 단위로 변환하여 그래프의 높이를 설정
+    Canvas(
+        modifier = modifier
+            .height(graphHeight.dp)
+            .clickable { onClick() }
+    ) {
+        /*
+         * 그래프의 선 두께를 지정
+         * `strokeWidth = 4f`로 설정하면 선이 4 픽셀 두꺼워진다.
+         * 값이 커질수록 더 굵은 선이 그려지며, 작아질수록 더 얇은 선이 그려진다.
+         */
+        val strokeWidth = graphHeight.dp.toPx() / 4
+        /*
+         * 원형 그래프의 반지름을 나타내는 값으로 그래프의 크기와 위치를 결정한다.
+         * 원의 중심에서 외곽선까지의 거리를 `radius`로 설정한다.
+         * `radius`는 그래프 높이에서 선 두께를 빼고 2로 나눈 값으로 설정한다.
+         * `radius = 50f`으로 설정하면 원의 중심에서부터 50 픽셀 떨어진 위치에 그려진다.
+         */
+        val radius = (graphHeight.dp.toPx() - strokeWidth) / 2
+        // 그래프의 중심 좌표
+        val centerX = size.width / 2f
+        val centerY = radius + strokeWidth / 2
 
-            drawGraph(colors, radius, strokeWidth, centerX, centerY, angleList)
-        }
-    } else {
-        Text(
-            text = "작성한 금액이 모두 0으로 \n표시할 그래프가 없습니다",
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp
-        )
+        drawGraph(colors, radius, strokeWidth, centerX, centerY, angleList)
     }
 }
 
@@ -617,7 +623,6 @@ fun GraphByCategory(
             dataExpenditure = categoryTotalExpenditure,
             dataIncome = categoryTotalIncome
         )
-
     } else {
         Text(text = "해당 카테고리에 데이터가 존재하지 않습니다.")
     }
