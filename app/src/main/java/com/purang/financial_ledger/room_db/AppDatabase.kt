@@ -6,16 +6,13 @@ import androidx.annotation.RequiresApi
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.purang.financial_ledger.room_db.category.CategoryDao
 import com.purang.financial_ledger.room_db.category.CategoryEntity
-import com.purang.financial_ledger.utils.ColorConverter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Database(entities = [FinancialEntity::class, CategoryEntity::class], version = 2, exportSchema = false)
-@TypeConverters(ColorConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun getFinancialDao(): FinancialDao
     abstract fun getCategoryDao(): CategoryDao
@@ -49,7 +46,7 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // FinancialTable에 selectColor 컬럼 추가 (기본값 0 설정)
-                db.execSQL("ALTER TABLE FinancialTable ADD COLUMN selectColor INTEGER DEFAULT 0")
+                db.execSQL("ALTER TABLE FinancialTable ADD COLUMN selectColor INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

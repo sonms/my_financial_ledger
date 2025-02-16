@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Ignore
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.purang.financial_ledger.room_db.category.CategoryEntity
@@ -24,24 +25,27 @@ import java.time.LocalDateTime
 )
 data class FinancialEntity(
     @PrimaryKey(autoGenerate = true)
-    val id : Long = 0L,
+    val id: Long = 0L,
     @ColumnInfo
-    var categoryId : Long?,
+    var categoryId: Long?,
     @ColumnInfo
-    var title : String?, //적을 내용
+    var title: String?, //적을 내용
     @ColumnInfo
-    var content : String?, //적을 내용
+    var content: String?, //적을 내용
     @ColumnInfo
     val createDate: String = LocalDateTime.now().toString(),
     @ColumnInfo
-    var date : String?, //날짜
+    var date: String?, //날짜
     @ColumnInfo
-    var expenditure : Long?, //지출
+    var expenditure: Long?, //지출
     @ColumnInfo
-    var income : Long?, //호득, 수입 등
+    var income: Long?, //호득, 수입 등
     @ColumnInfo
-    var selectColor : Color?
-)
+    var selectColor: Int //not null 기본값 0
+) {
+    @Ignore
+    val color = Color(selectColor)
+}
 
 
 /*data class TodoEntity (

@@ -65,6 +65,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -117,6 +118,19 @@ fun EditFinancialScreen(
         }
     }
 
+    var selectedColor by remember {
+        mutableStateOf (
+            if (financialItem?.selectColor == 0) Color.Transparent else financialItem?.color ?: Color.Transparent
+        )
+    }
+
+    LaunchedEffect(financialItem) {
+        if (financialItem != null) {
+            viewModel.refreshSelectedItem()
+            selectedColor = if (financialItem?.selectColor == 0) Color.Transparent else financialItem?.color ?: Color.Transparent
+        }
+    }
+
     val categoryDataList by categoryViewModel.categoryData.observeAsState(emptyList())
     // ViewModel에서 데이터 관찰
 
@@ -163,9 +177,13 @@ fun EditFinancialScreen(
         mutableStateOf("")
     }
 
-    var selectedColor by remember {
-        mutableStateOf<Color?>(null)
-    }
+
+
+    /*LaunchedEffect(selectedColor) {
+        if (financialItem?.selectColor != ColorConverter().fromColor(selectedColor)) {
+            viewModel.updateSelectedColor(selectedColor)
+        }
+    }*/
 
     var isError by remember {
         mutableStateOf(false)
@@ -203,30 +221,24 @@ fun EditFinancialScreen(
             .fillMaxWidth()
             .wrapContentHeight()
     ) {
-        Row (
-            verticalAlignment = Alignment.Top,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
+            IconButton(onClick = { navController.popBackStack() }) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "backScreen")
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
             EditColor(
-                onCancelClick = {
-                },
+                itemColor = selectedColor,
+                onCancelClick = { },
                 onClickColor = {
                     selectedColor = it
                 }
             )
-
-
-            IconButton(onClick = { navController.popBackStack() }) {
-                Column(
-                    modifier = Modifier
-                        .padding(5.dp)
-                        .wrapContentSize()
-                        .align(Alignment.Top),
-                    horizontalAlignment = Alignment.Start
-                ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "backScreen")
-                }
-            }
         }
 
         LazyColumn(
@@ -986,6 +998,7 @@ fun EditTransaction(
 
 @Composable
 fun EditColor (
+    itemColor : Color?,
     onCancelClick: () -> Unit,
     onClickColor:(Color) -> Unit
 ) {
@@ -993,19 +1006,18 @@ fun EditColor (
         mutableStateOf(false)
     }
 
-    var selectedColor by remember {
-        mutableStateOf(Color.Transparent)
-    }
-
     val colorList = listOf(Color.Red, orange, yellow, green, blue, purple, pink5, blueP5)
 
     Row (
-        modifier = Modifier,
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier.padding(end = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = "색 설정하기",
-            modifier = Modifier.clickable {
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(end = 5.dp).clickable {
                 isClickText = !isClickText
             }
         )
@@ -1014,7 +1026,7 @@ fun EditColor (
         Box(
             modifier = Modifier
                 .size(24.dp)
-                .background(selectedColor, shape = CircleShape)
+                .background(itemColor ?: Color.Transparent, shape = CircleShape)
                 .border(1.dp, Color.Gray, shape = CircleShape)
         )
 
@@ -1048,7 +1060,6 @@ fun EditColor (
                                     .border(2.dp, Color.Gray, shape = CircleShape)
                                     .size(24.dp)
                                     .clickable {
-                                        selectedColor = item
                                         onClickColor(item)
                                         isClickText = false
                                     }

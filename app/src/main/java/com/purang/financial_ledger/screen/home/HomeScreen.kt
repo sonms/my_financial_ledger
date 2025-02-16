@@ -596,7 +596,100 @@ fun HomeFinancialItem(
 ) {
     var expanded by rememberSaveable { mutableStateOf(false) }
 
-    Financial_LedgerTheme {
+    if (item.selectColor == 0) {
+        Financial_LedgerTheme {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp)
+                    .animateContentSize(
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        )
+                    )
+                    .combinedClickable(
+                        onClick = {
+                            onItemClick(item) // handle click and pass item data
+                        },
+                        onLongClick = {
+                            onLongClick(item)
+                        },
+                    )
+                    .background(
+                        color = if (expanded) MaterialTheme.colorScheme.primary//열릴때
+                        else MaterialTheme.colorScheme.tertiary, //기본
+                        shape = RoundedCornerShape(8.dp)
+                    )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        // Display the financial data
+                        Text(
+                            text = item.title ?: "",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 24.sp,
+                            //color = MaterialTheme.colorScheme.onSurface
+                        )
+
+                        Spacer(modifier = Modifier.weight(1f))
+
+                        Column (
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "수입 +${numberFormat(item.income ?: 0L)}원",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.onSecondary
+                                //color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "지출 -${numberFormat(item.expenditure ?: 0L)}원",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.secondary
+                                //color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "Date: ${item.date}",
+                        style = MaterialTheme.typography.bodySmall,
+                        //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+
+                    // Show additional content when expanded
+                    if (expanded) {
+                        Text(
+                            text = item.content ?: "",
+                            style = MaterialTheme.typography.bodyLarge,
+                            //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+
+                IconButton(onClick = { expanded = !expanded }) {
+                    Icon(
+                        imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = if (expanded) "Show less" else "Show more"
+                    )
+                }
+            }
+        }
+    } else {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -616,8 +709,7 @@ fun HomeFinancialItem(
                     },
                 )
                 .background(
-                    color = if (expanded) MaterialTheme.colorScheme.primary//열릴때
-                    else MaterialTheme.colorScheme.tertiary, //기본
+                    color = item.color,
                     shape = RoundedCornerShape(8.dp)
                 )
         ) {
@@ -642,7 +734,7 @@ fun HomeFinancialItem(
 
                     Spacer(modifier = Modifier.weight(1f))
 
-                    Column (
+                    Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
@@ -680,7 +772,6 @@ fun HomeFinancialItem(
                 }
             }
 
-            // Toggle button to expand/collapse
             IconButton(onClick = { expanded = !expanded }) {
                 Icon(
                     imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,

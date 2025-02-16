@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.purang.financial_ledger.model.TotalIncomeExpenditure
 import com.purang.financial_ledger.repository.FinancialRepository
 import com.purang.financial_ledger.room_db.FinancialEntity
+import com.purang.financial_ledger.utils.ColorConverter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -130,17 +131,28 @@ class HomeViewModel @Inject constructor(
 
     // ID에 따라 데이터를 가져오는 함수
     fun setSelectedId(id: Long?) {
-        _selectedId.value = id
+        if (_selectedId.value == id) {
+            refreshSelectedItem()
+        } else {
+            _selectedId.value = id
+        }
     }
 
+    fun refreshSelectedItem() {
+        viewModelScope.launch {
+            _selectedId.value?.let { id ->
+                val event = financialRepo.getEventsById(id)
+                _selectedFinancialItem.value = event
+            }
+        }
+    }
     init {
         // _selectedId가 변경될 때마다 이벤트를 처리하도록 설정
         viewModelScope.launch {
             _selectedId.collect { id ->
                 // ID가 변경될 때마다 해당 ID에 맞는 데이터를 가져와서 _selectedFinancialItem에 업데이트
                 if (id != null) {
-                    val event = financialRepo.getEventsById(id)
-                    _selectedFinancialItem.value = event
+                    refreshSelectedItem()
                 } else {
                     _selectedFinancialItem.value = null
                 }
@@ -201,16 +213,20 @@ class HomeViewModel @Inject constructor(
     val income: Long?*/
 
         viewModelScope.launch {
-            val newTodo = FinancialEntity(
-                categoryId = categoryId,
-                title = title,
-                content = content,
-                date = date,
-                expenditure = expenditure,
-                income = income,
-                selectColor = selectColor
-            )
-            financialRepo.insertData(newTodo)
+            val newTodo = ColorConverter().fromColor(selectColor)?.let {
+                FinancialEntity(
+                    categoryId = categoryId,
+                    title = title,
+                    content = content,
+                    date = date,
+                    expenditure = expenditure,
+                    income = income,
+                    selectColor = it
+                )
+            }
+            if (newTodo != null) {
+                financialRepo.insertData(newTodo)
+            }
         }
     }
 
@@ -226,17 +242,21 @@ class HomeViewModel @Inject constructor(
     val income: Long?*/
 
         viewModelScope.launch {
-            val newTodo = FinancialEntity(
-                id = id,
-                categoryId = categoryId,
-                title = title,
-                content = content,
-                date = date,
-                expenditure = expenditure,
-                income = income,
-                selectColor = selectColor
-            )
-            financialRepo.updateData(newTodo)
+            val newTodo = ColorConverter().fromColor(selectColor)?.let {
+                FinancialEntity(
+                    id = id,
+                    categoryId = categoryId,
+                    title = title,
+                    content = content,
+                    date = date,
+                    expenditure = expenditure,
+                    income = income,
+                    selectColor = it
+                )
+            }
+            if (newTodo != null) {
+                financialRepo.updateData(newTodo)
+            }
         }
     }
 
