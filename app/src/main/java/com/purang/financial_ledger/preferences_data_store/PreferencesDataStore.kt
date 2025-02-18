@@ -14,6 +14,21 @@ object PreferencesDataStore {
     private val EntireIncome = stringPreferencesKey("EntireIncome")
     private val EntireExpenditure = stringPreferencesKey("EntireExpenditure")
     private val STATE_SET = booleanPreferencesKey("state")
+    private val BUDGET_SET = stringPreferencesKey("budget")
+
+    suspend fun saveBudget(context: Context, budget: String) {
+        context.dataStore.edit { preferences ->
+            preferences[BUDGET_SET] = budget
+        }
+    }
+
+    fun getBudget(context: Context): Flow<String?> {
+        return context.dataStore.data
+            .map { preferences ->
+                preferences[BUDGET_SET] ?: "0"
+            }
+    }
+
 
     suspend fun saveEntireIncome(context: Context, income: String) {
         context.dataStore.edit { preferences ->

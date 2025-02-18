@@ -50,6 +50,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -75,6 +76,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.purang.financial_ledger.R
 import com.purang.financial_ledger.model.TotalIncomeExpenditure
+import com.purang.financial_ledger.preferences_data_store.PreferencesDataStore
 import com.purang.financial_ledger.room_db.FinancialEntity
 import com.purang.financial_ledger.room_db.category.CategoryEntity
 import com.purang.financial_ledger.screen.chart.numberFormat
@@ -129,6 +131,8 @@ fun HomeScreen(
         mutableStateOf<Long?>(null)
     }
 
+    val context = LocalContext.current
+    val getBudgetData by PreferencesDataStore.getBudget(context).collectAsState(initial = "0")
     /*val context = LocalContext.current
     val entireIncome by getEntireIncome(context).collectAsState(initial = "0")
     val entireExpenditure by getEntireExpenditure(context).collectAsState(initial = "0")*/
@@ -304,6 +308,16 @@ fun HomeScreen(
                     blueD
                 }
 
+                val budgetManage = monthTotalIncomeExpenditure.totalExpenditure?.let {
+                    getBudgetData?.toLongOrNull()?.minus(it)
+                } ?: 0L
+
+                val budgetBackground = if (budgetManage >= 0) {
+                    redD
+                } else {
+                    blueD
+                }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -313,15 +327,37 @@ fun HomeScreen(
                 ) {
                     Text(
                         text = if (entire > 0L) {
-                            "현재 ${numberFormat(entire)}원 남았습니다."
+                            "이번 달 ${numberFormat(entire)}원 남았습니다."
                         } else {
-                            "현재 ${numberFormat(entire)}원 더 사용하였습니다."
+                            "이번 달 ${numberFormat(entire)}원 더 사용하였습니다."
                         },
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         color = Color.White
                     )
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .background(budgetBackground, RoundedCornerShape(12.dp))
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = if (budgetManage > 0L) {
+                            "목표 예산이 ${numberFormat(budgetManage)}원 남았습니다."
+                        } else {
+                            "목표 예산에서 ${numberFormat(budgetManage)}원 더 사용하였습니다."
+                        },
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = Color.White
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
@@ -357,7 +393,6 @@ fun HomeScreen(
     }
 
     if (isBottomSheetOpen) {
-        val context = LocalContext.current
         MonthDropDownButtonBottomSheet(
             modifier = Modifier.height(160.dp),
             monthData = yearMonths.ifEmpty {
