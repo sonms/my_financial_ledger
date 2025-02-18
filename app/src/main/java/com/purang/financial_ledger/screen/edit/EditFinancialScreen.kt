@@ -147,9 +147,13 @@ fun EditFinancialScreen(
         mutableStateOf<CategoryEntity?>(null)
     }
 
-    val selectedCategory = selectCategory ?: financialItem?.categoryId?.let { categoryId ->
-        categoryDataList.find { it.id == categoryId }
+    LaunchedEffect(financialItem?.categoryId) {
+        financialItem?.categoryId?.let { categoryId ->
+            selectCategory = categoryDataList.find { it.id == categoryId }
+        }
     }
+
+    val selectedCategory = selectCategory
 
     var selectedDate by remember {
         mutableStateOf<String?>(null)
@@ -274,7 +278,6 @@ fun EditFinancialScreen(
                         .padding(10.dp) // LazyRow가 전체 너비를 차지하도록 설정
                 ) {
                     item {
-                       
                         IconButton(onClick = { isShowingCategoryDialog = true }) {
                             Column(
                                 modifier = Modifier
@@ -299,17 +302,15 @@ fun EditFinancialScreen(
                     ) { _, item ->
                         EditCategoryItem(
                             item,
-                            isSelected = selectedCategory?.id == item.id, // 선택된 카테고리와 비교
+                            isSelected = selectedCategory?.id == item.id,
                             onClick = {
-                                // 클릭 시 선택된 카테고리 설정
-                                selectCategory = if (selectCategory?.id != item.id) {
-                                    item
-                                } else {
+                                selectCategory = if (selectCategory?.id == item.id) {
                                     null
+                                } else {
+                                    item
                                 }
                             },
                             onLongClick = {
-                                // 길게 클릭 시 카테고리 수정, 삭제 등 다른 동작을 추가 가능
                                 categoryViewModel.deleteCategory(it)
                             }
                         )
