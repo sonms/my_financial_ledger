@@ -97,6 +97,7 @@ fun ChartScreen(
         TotalIncomeExpenditure(0, 0)
     )
 
+    //선택한 카테고리에 담긴 데이터
     val selectFinancialDataByCategoryId by viewModel.getFinancialDataByCategoryId.observeAsState(
         emptyList()
     )
@@ -241,7 +242,7 @@ fun ChartScreen(
             CompareBeforeMonthTotalAmount(beforeMonthDataCheck)
 
         } else {
-            Text(text = "해당 월에 데이터가 존재하지 않습니다.")
+            Text(text = "현재 달에 데이터가 존재하지 않습니다.")
         }
 
         if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
@@ -253,13 +254,29 @@ fun ChartScreen(
             )
         }
 
-        if (selectFinancialDataByCategoryId.isNotEmpty()) {
+        if (selectFinancialDataByCategoryId.isNotEmpty()) { //처음은 어느 카테고리도x한 데이터
             GraphByCategory(selectFinancialDataByCategoryId = selectFinancialDataByCategoryId)
-        } else {
-            if (categoryAllData.isNotEmpty()) {
-                Text(text = "카테고리를 선택해주세요.")
+        } else { //만약 초기에 카테고리에만 데이터가 있음
+            if (categoryAllData.isNotEmpty()) { //카테고리의 데이터가 비어있지않음
+                if (selectCategoryId == null) {
+                    Text(
+                        text = "카테고리를 선택해주세요",
+                        modifier = Modifier.padding(top = 20.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                } else {
+                    Text(
+                        text = "해당 카테고리에 데이터가 존재하지 않습니다",
+                        modifier = Modifier.padding(top = 20.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             } else {
-                Text(text = "카테고리가 존재하지 않습니다.")
+                Text(
+                    text = "카테고리를 설정하지 않은 데이터가 \n존재하지 않습니다.",
+                    modifier = Modifier.padding(top = 20.dp),
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -624,7 +641,11 @@ fun GraphByCategory(
             dataIncome = categoryTotalIncome
         )
     } else {
-        Text(text = "해당 카테고리에 데이터가 존재하지 않습니다.")
+        Text(
+            text = "작성한 금액이 모두 0으로 \n표시할 그래프가 없습니다",
+            modifier = Modifier.padding(top = 20.dp),
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 
@@ -636,9 +657,12 @@ fun CategoryStickyHeader(
     // 선택된 카테고리를 관리하는 상태
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
 
-    Row (modifier = Modifier
-        .fillMaxWidth()
-        .wrapContentHeight()) {
+    Row (
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(top = 20.dp)
+    ) {
         Text(
             text = "카테고리",
             modifier = Modifier
