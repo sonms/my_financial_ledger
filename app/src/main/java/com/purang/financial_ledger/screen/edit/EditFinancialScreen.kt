@@ -1,5 +1,6 @@
 package com.purang.financial_ledger.screen.edit
 
+import android.graphics.Color.colorToHSV
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -45,7 +47,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,6 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -489,13 +495,6 @@ fun EditTitle(
                 }
             },
         )
-
-        /*Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(blueP2)
-        )*/
     }
 }
 
@@ -1018,9 +1017,11 @@ fun EditColor (
             text = "색 설정하기",
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(end = 5.dp).clickable {
-                isClickText = !isClickText
-            }
+            modifier = Modifier
+                .padding(end = 5.dp)
+                .clickable {
+                    isClickText = !isClickText
+                }
         )
 
         // 선택한 색상 표시
@@ -1032,7 +1033,18 @@ fun EditColor (
         )
 
         if (isClickText) {
-            Dialog(
+            ColorPickerDialog(
+                onDismiss = {
+                    onCancelClick()
+                    isClickText = !isClickText
+                },
+
+                onColorSelected =  {
+                    onClickColor(it)
+                    isClickText = false
+                }
+            )
+            /*Dialog(
                 onDismissRequest = {
                     onCancelClick()
                     isClickText = !isClickText
@@ -1044,9 +1056,9 @@ fun EditColor (
                         .wrapContentHeight()
                         .padding(10.dp),
                     shape = RoundedCornerShape(8.dp),
-                    /*colors = CardDefaults.cardColors(
+                    *//*colors = CardDefaults.cardColors(
                         containerColor = Color.White
-                    ),*/
+                    ),*//*
                 ) {
                     LazyRow (
                         modifier = Modifier.padding(16.dp),
@@ -1066,6 +1078,91 @@ fun EditColor (
                                     }
                             )
                         }
+                    }
+                }
+            }*/
+        }
+    }
+}
+
+@Composable
+fun ColorPickerDialog(
+    initialColor: Color = Color.Red,
+    onDismiss: () -> Unit,
+    onColorSelected: (Color) -> Unit
+) {
+    var hue by remember { mutableStateOf(0f) }      // 색상 (0~360°)
+    var saturation by remember { mutableStateOf(1f) } // 채도 (0~1)
+    var lightness by remember { mutableStateOf(0.5f) } // 밝기 (0~1)
+
+    // 초기 색상을 HSL 값으로 변환
+    LaunchedEffect(initialColor) {
+        val hsl = FloatArray(3)
+        Color.run { colorToHSV(initialColor.toArgb(), hsl) }
+        hue = hsl[0]
+        saturation = hsl[1]
+        lightness = hsl[2]
+    }
+
+    val selectedColor = Color.hsl(hue, saturation, lightness)
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = "색상 선택", style = MaterialTheme.typography.titleLarge)
+
+                // 선택된 색상 미리보기
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .background(selectedColor, RoundedCornerShape(50.dp))
+                        .padding(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 색상 선택 슬라이더 (Hue)
+                Text(text = "색상 (Hue)")
+                Slider(
+                    value = hue,
+                    onValueChange = { hue = it },
+                    valueRange = 0f..360f
+                )
+
+                // 채도 선택 슬라이더 (Saturation)
+                Text(text = "채도 (Saturation)")
+                Slider(
+                    value = saturation,
+                    onValueChange = { saturation = it },
+                    valueRange = 0f..1f
+                )
+
+                // 밝기 선택 슬라이더 (Lightness)
+                Text(text = "밝기 (Lightness)")
+                Slider(
+                    value = lightness,
+                    onValueChange = { lightness = it },
+                    valueRange = 0f..1f
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("취소")
+                    }
+                    Button(onClick = { onColorSelected(selectedColor) }) {
+                        Text("확인")
                     }
                 }
             }
