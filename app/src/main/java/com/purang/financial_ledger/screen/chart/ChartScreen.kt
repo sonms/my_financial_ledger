@@ -141,7 +141,11 @@ fun ChartScreen(
         viewModel.fetchBeforeByMonth(yearMonth)
 
         //카테고리
-        viewModel.fetchCategoryId(selectCategoryId)
+        if (selectCategoryId == -1L) {
+            viewModel.fetchCategoryId(null)
+        } else {
+            viewModel.fetchCategoryId(selectCategoryId)
+        }
     }
 
     LaunchedEffect(selectMonth) {
@@ -156,7 +160,11 @@ fun ChartScreen(
     }
 
     LaunchedEffect(selectCategoryId) {
-        viewModel.fetchCategoryId(selectCategoryId)
+        if (selectCategoryId == -1L) {
+            viewModel.fetchCategoryId(null)
+        } else {
+            viewModel.fetchCategoryId(selectCategoryId)
+        }
     }
 
 
@@ -242,16 +250,18 @@ fun ChartScreen(
             CompareBeforeMonthTotalAmount(beforeMonthDataCheck)
 
         } else {
-            Text(text = "현재 달에 데이터가 존재하지 않습니다.")
+            Text(
+                text = "현재 달에 데이터가 존재하지 않습니다.",
+                modifier = Modifier.fillMaxWidth().weight(1f)
+            )
         }
 
-        if (monthTotalIncomeExpenditure.totalIncome != null || monthTotalIncomeExpenditure.totalExpenditure != null) {
-            CategoryStickyHeader(
-                categoryData = categoryAllData,
-                onCategoryClick = {
-                    selectCategoryId = it
-                }
-            )
+        CategoryStickyHeader(
+            categoryData = categoryAllData
+        ) {
+            selectCategoryId = it
+            Log.e("CategoryStickyHeader", selectCategoryId.toString())
+            Log.e("CategoryStickyHeader", categoryAllData.toString())
         }
 
         if (selectFinancialDataByCategoryId.isNotEmpty()) { //처음은 어느 카테고리도x한 데이터
@@ -655,7 +665,7 @@ fun CategoryStickyHeader(
     onCategoryClick : (Long?) -> Unit
 ) {
     // 선택된 카테고리를 관리하는 상태
-    var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
+    var selectedCategoryId by remember { mutableStateOf<Long?>(-1) }
 
     Row (
         modifier = Modifier

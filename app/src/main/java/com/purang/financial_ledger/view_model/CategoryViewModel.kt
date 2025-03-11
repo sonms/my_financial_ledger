@@ -1,9 +1,9 @@
 package com.purang.financial_ledger.view_model
 
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import com.purang.financial_ledger.repository.CategoryRepository
 import com.purang.financial_ledger.room_db.category.CategoryEntity
@@ -16,7 +16,13 @@ class CategoryViewModel @Inject constructor(
     repository: CategoryRepository
 ) : ViewModel() {
     private val categoryRepo = repository
-    val categoryData: LiveData<List<CategoryEntity>> = categoryRepo.getAllCategory()
+
+    private val defaultCategory = CategoryEntity(id = -1, categoryName = "미분류")
+
+    val categoryData: LiveData<List<CategoryEntity>> = categoryRepo.getAllCategory().switchMap { list ->
+        val updatedList = (list + defaultCategory).distinctBy { it.id }.sortedBy { it.id }
+        MutableLiveData(updatedList)
+    }
 
     fun getCategoryItemById(id: Long?) {
         viewModelScope.launch {
@@ -25,7 +31,6 @@ class CategoryViewModel @Inject constructor(
     }
 
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun addCategory(name: String) {
         viewModelScope.launch {
             val newCategory = CategoryEntity(
@@ -35,7 +40,6 @@ class CategoryViewModel @Inject constructor(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     fun deleteCategory(data : CategoryEntity) {
         viewModelScope.launch {
             categoryRepo.deleteCategory(data)
