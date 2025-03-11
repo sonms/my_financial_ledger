@@ -69,6 +69,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -668,18 +669,21 @@ fun HomeFinancialItem(
                             .wrapContentHeight(),
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        // Display the financial data
                         Text(
                             text = item.title ?: "",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 24.sp,
-                            //color = MaterialTheme.colorScheme.onSurface
+                            fontSize = 20.sp,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
 
-                        Spacer(modifier = Modifier.weight(1f))
 
                         Column (
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            modifier = Modifier.weight(1f),
+                            horizontalAlignment = Alignment.End
                         ) {
                             Text(
                                 text = "수입 +${numberFormat(item.income ?: 0L)}원",
@@ -706,11 +710,12 @@ fun HomeFinancialItem(
                         //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
 
-                    // Show additional content when expanded
                     if (expanded) {
                         Text(
                             text = item.content ?: "",
                             style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(top = 20.dp),
+                            fontSize = 16.sp
                             //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     }
@@ -759,18 +764,22 @@ fun HomeFinancialItem(
                         .wrapContentHeight(),
                     horizontalArrangement = Arrangement.Center
                 ) {
-                    // Display the financial data
                     Text(
                         text = item.title ?: "",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 24.sp,
-                        //color = MaterialTheme.colorScheme.onSurface
+                        fontSize = 20.sp,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 8.dp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
                     Spacer(modifier = Modifier.weight(1f))
 
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.End
                     ) {
                         Text(
                             text = "수입 +${numberFormat(item.income ?: 0L)}원",
@@ -802,6 +811,8 @@ fun HomeFinancialItem(
                     Text(
                         text = item.content ?: "",
                         style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(top = 20.dp),
+                        fontSize = 16.sp
                         //color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }

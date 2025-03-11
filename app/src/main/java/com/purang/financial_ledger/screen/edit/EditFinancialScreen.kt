@@ -304,7 +304,7 @@ fun EditFinancialScreen(
                     }
 
                     itemsIndexed(
-                        items = categoryDataList
+                        items = categoryDataList.filter { it.id != -1L }
                     ) { _, item ->
                         EditCategoryItem(
                             item,
